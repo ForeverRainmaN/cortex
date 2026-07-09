@@ -1,10 +1,16 @@
 package cortex.domain
 
+import cortex.domain.DecideError.AlreadyExists
 import cortex.domain.LearningEvent.*
 
 private type DecideErrorOrEvent = Either[DecideError, LearningEvent]
 
 def decide(state: Option[ContentState], command: Command): DecideErrorOrEvent =
+  def validateQueueing(state: Option[ContentState], id: ContentId, kind: ContentKind): DecideErrorOrEvent =
+    state match
+      case Some(value) => Left(AlreadyExists(id))
+      case None        => Right(ContentQueued(id, kind))
+
   def validateStarting(state: ContentState): DecideErrorOrEvent =
     state.status match
       case ContentStatus.InProgress =>
@@ -41,6 +47,8 @@ def decide(state: Option[ContentState], command: Command): DecideErrorOrEvent =
         Left(DecideError.InvalidTransition(Command.UpdateProgress(progress), s.kind, other))
 
   (state, command) match
+    case (maybeState, Command.Enqueue(id, kind))     =>
+      validateQueueing(maybeState, id, kind)
     case (Some(s), Command.Complete)                 =>
       validateCompletion(s)
     case (Some(s), Command.Start)                    =>

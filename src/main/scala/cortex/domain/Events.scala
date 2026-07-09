@@ -11,11 +11,11 @@ enum ContentProgress:
   case BookAt(page: Int)
 
 enum LearningEvent(val id: ContentId):
-  case ProgressUpdated(override val id: ContentId, position: ContentProgress) extends LearningEvent(id)
   case ContentQueued(override val id: ContentId, kind: ContentKind)           extends LearningEvent(id)
   case ContentStarted(override val id: ContentId)                             extends LearningEvent(id)
   case ContentCompleted(override val id: ContentId)                           extends LearningEvent(id)
   case ContentAbandoned(override val id: ContentId)                           extends LearningEvent(id)
   case ContentResumed(override val id: ContentId)                             extends LearningEvent(id)
+  case ProgressUpdated(override val id: ContentId, position: ContentProgress) extends LearningEvent(id)
   case NoteAdded(override val id: ContentId, note: Note)                      extends LearningEvent(id)
   case NoteRemoved(override val id: ContentId, noteId: NoteId)                extends LearningEvent(id)

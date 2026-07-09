@@ -11,7 +11,17 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration.DurationInt
 
-class DecideSpec extends AnyFlatSpec with Matchers with DomainSpec:
+class DecideSpec extends AnyFlatSpec, Matchers, DomainSpec:
+  it should "enqueue new content" in:
+    decide(initStateEmpty, Enqueue(contentId, ContentKind.Book)) shouldBe Right(
+      LearningEvent.ContentQueued(contentId, ContentKind.Book)
+    )
+
+  it should "fail to enqueue new content if content already exists" in:
+    decide(initStateInProgress, Enqueue(contentId, ContentKind.Book)) shouldBe Left(
+      DecideError.AlreadyExists(contentId)
+    )
+
   it should "start content from Todo state" in:
     val initialState = createInitialState(ContentStatus.Todo)
     decide(initialState, Start) shouldBe Right(LearningEvent.ContentStarted(contentId))

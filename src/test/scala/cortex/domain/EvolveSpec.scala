@@ -3,10 +3,10 @@ package cortex.domain
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class EvolveSpec extends AnyFlatSpec with Matchers with DomainSpec:
-  it should "creates new ContentState with Todo status when LearningEvent == ContentQueued" in:
-    val event = LearningEvent.ContentQueued(contentId, ContentKind.Book)
+class EvolveSpec extends AnyFlatSpec, Matchers, DomainSpec:
 
+  it should "create new ContentState" in:
+    val event = LearningEvent.ContentQueued(contentId, ContentKind.Book)
     evolve(initStateEmpty, event) shouldBe Some(
       ContentState(contentId, ContentKind.Book, ContentStatus.Todo, None, Vector.empty)
     )
