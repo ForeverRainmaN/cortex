@@ -3,7 +3,7 @@ package cortex.domain
 def evolve(state: Option[ContentState], event: LearningEvent): Option[ContentState] =
   (state, event) match
     case (None, LearningEvent.ContentQueued(id, kind))         =>
-      Some(ContentState(id, kind, ContentStatus.Todo, None, Vector.empty))
+      Some(ContentState.initial(id, kind))
     case (Some(s), LearningEvent.ContentStarted(_))            =>
       Some(s.copy(status = ContentStatus.InProgress))
     case (Some(s), LearningEvent.ContentCompleted(_))          =>
@@ -20,8 +20,11 @@ def evolve(state: Option[ContentState], event: LearningEvent): Option[ContentSta
       Some(s.copy(notes = s.notes.filterNot(_.id == noteId)))
     case (state, _)                                            => state
 
+def fold(events: List[LearningEvent]): Option[ContentState] =
+  events.foldLeft(Option.empty[ContentState])(evolve)
+
 def foldAll(events: List[LearningEvent]): Map[ContentId, ContentState] =
   events
     .groupBy(_.id)
     .flatMap: (id, events) =>
-      events.foldLeft(Option.empty[ContentState])(evolve).map(id -> _)
+      fold(events).map(id -> _)

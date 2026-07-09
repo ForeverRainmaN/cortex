@@ -10,3 +10,13 @@ case class ContentState(
   progress: Option[ContentProgress],
   notes: Vector[Note]
 )
+
+object ContentState:
+  def initial(id: ContentId, kind: ContentKind): ContentState =
+    ContentState(
+      id,
+      kind,
+      ContentStatus.Todo,
+      None,
+      Vector.empty
+    )

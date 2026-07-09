@@ -10,6 +10,13 @@ enum ContentProgress:
   case ArticleAt(percentage: Percentage)
   case BookAt(page: Int)
 
+  def matches(kind: ContentKind): Boolean =
+    (kind, this) match
+      case (ContentKind.Book, BookAt(_))       => true
+      case (ContentKind.Video, VideoAt(_))     => true
+      case (ContentKind.Article, ArticleAt(_)) => true
+      case _                                   => false
+
 enum LearningEvent(val id: ContentId):
   case ContentQueued(override val id: ContentId, kind: ContentKind)           extends LearningEvent(id)
   case ContentStarted(override val id: ContentId)                             extends LearningEvent(id)

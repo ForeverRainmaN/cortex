@@ -1,67 +1,124 @@
 package cortex.domain
 
-import cortex.domain.DecideError.AlreadyExists
+import cortex.domain.*
+import cortex.domain.DecideError.*
 import cortex.domain.LearningEvent.*
 
 private type DecideErrorOrEvent = Either[DecideError, LearningEvent]
 
-def decide(state: Option[ContentState], command: Command): DecideErrorOrEvent =
-  def validateQueueing(state: Option[ContentState], id: ContentId, kind: ContentKind): DecideErrorOrEvent =
-    state match
-      case Some(value) => Left(AlreadyExists(id))
-      case None        => Right(ContentQueued(id, kind))
+def decide(
+  state: Option[ContentState],
+  command: Command
+): DecideErrorOrEvent =
 
-  def validateStarting(state: ContentState): DecideErrorOrEvent =
+  def invalidTransition(
+    state: ContentState,
+    command: Command
+  ): DecideError =
+    InvalidTransition(command, state.kind, state.status)
+
+  def transition(
+    state: ContentState,
+    command: Command,
+    forbidden: Set[ContentStatus]
+  )(
+    event: => LearningEvent
+  ): DecideErrorOrEvent =
+    if forbidden.contains(state.status) then Left(invalidTransition(state, command))
+    else Right(event)
+
+  def validateUpdatingProgress(
+    state: ContentState,
+    progress: ContentProgress
+  ): DecideErrorOrEvent =
     state.status match
       case ContentStatus.InProgress =>
-        Left(DecideError.InvalidTransition(Command.Start, state.kind, state.status))
-      case _                        => Right(ContentStarted(state.id))
+        Either.cond(
+          progress.matches(state.kind),
+          ProgressUpdated(state.id, progress),
+          ProgressKindMismatch(state.kind, progress)
+        )
 
-  def validateAbandoning(state: ContentState): DecideErrorOrEvent =
-    state.status match
-      case ContentStatus.Completed =>
-        Left(DecideError.InvalidTransition(Command.Abandon, state.kind, state.status))
-      case _                       => Right(ContentAbandoned(state.id))
+      case _ =>
+        Left(
+          invalidTransition(
+            state,
+            Command.UpdateProgress(progress)
+          )
+        )
 
-  def validateCompletion(state: ContentState): DecideErrorOrEvent =
-    state.status match
-      case ContentStatus.Completed =>
-        Left(DecideError.InvalidTransition(Command.Complete, state.kind, state.status))
-      case _                       => Right(ContentCompleted(state.id))
+  def validateAddNote(
+    state: ContentState,
+    note: Note
+  ): DecideErrorOrEvent =
+    Either.cond(
+      !state.notes.exists(_.id == note.id),
+      NoteAdded(state.id, note),
+      NoteAlreadyExists(note.id)
+    )
 
-  def validateResuming(state: ContentState): DecideErrorOrEvent =
-    state.status match
-      case ContentStatus.Abandoned => Right(ContentResumed(state.id))
-      case _                       =>
-        Left(DecideError.InvalidTransition(Command.Resume, state.kind, state.status))
-
-  def validateUpdatingProgress(s: ContentState, progress: ContentProgress): DecideErrorOrEvent =
-    s.status match
-      case ContentStatus.InProgress =>
-        (s.kind, progress) match
-          case (ContentKind.Book, ContentProgress.BookAt(_))       => Right(ProgressUpdated(s.id, progress))
-          case (ContentKind.Video, ContentProgress.VideoAt(_))     => Right(ProgressUpdated(s.id, progress))
-          case (ContentKind.Article, ContentProgress.ArticleAt(_)) => Right(ProgressUpdated(s.id, progress))
-          case (kind, bad)                                         => Left(DecideError.ProgressKindMismatch(kind, bad))
-      case other                    =>
-        Left(DecideError.InvalidTransition(Command.UpdateProgress(progress), s.kind, other))
+  def validateRemoveNote(
+    state: ContentState,
+    noteId: NoteId
+  ): DecideErrorOrEvent =
+    Either.cond(
+      state.notes.exists(_.id == noteId),
+      NoteRemoved(state.id, noteId),
+      NoteNotFound(noteId)
+    )
 
   (state, command) match
-    case (maybeState, Command.Enqueue(id, kind))     =>
-      validateQueueing(maybeState, id, kind)
-    case (Some(s), Command.Complete)                 =>
-      validateCompletion(s)
-    case (Some(s), Command.Start)                    =>
-      validateStarting(s)
-    case (Some(s), Command.Abandon)                  =>
-      validateAbandoning(s)
-    case (Some(s), Command.Resume)                   =>
-      validateResuming(s)
-    case (Some(s), Command.UpdateProgress(progress)) =>
-      validateUpdatingProgress(s, progress)
-    case (Some(s), Command.AddNote(text))            =>
-      Right(NoteAdded(s.id, text))
-    case (Some(s), Command.RemoveNote(noteId))       =>
-      Right(NoteRemoved(s.id, noteId))
-    case (None, _)                                   =>
-      Left(DecideError.NonExistentState)
+
+    case (None, Command.Enqueue(id, kind)) =>
+      Right(ContentQueued(id, kind))
+
+    case (Some(_), Command.Enqueue(id, _)) =>
+      Left(AlreadyExists(id))
+
+    case (Some(state), Command.Start) =>
+      transition(
+        state,
+        Command.Start,
+        Set(ContentStatus.InProgress)
+      ):
+        ContentStarted(state.id)
+
+    case (Some(state), Command.Complete) =>
+      transition(
+        state,
+        Command.Complete,
+        Set(ContentStatus.Completed)
+      ):
+        ContentCompleted(state.id)
+
+    case (Some(state), Command.Abandon) =>
+      transition(
+        state,
+        Command.Abandon,
+        Set(ContentStatus.Completed)
+      ):
+        ContentAbandoned(state.id)
+
+    case (Some(state), Command.Resume) =>
+      transition(
+        state,
+        Command.Resume,
+        Set(
+          ContentStatus.Todo,
+          ContentStatus.InProgress,
+          ContentStatus.Completed
+        )
+      ):
+        ContentResumed(state.id)
+
+    case (Some(state), Command.UpdateProgress(progress)) =>
+      validateUpdatingProgress(state, progress)
+
+    case (Some(state), Command.AddNote(note)) =>
+      validateAddNote(state, note)
+
+    case (Some(state), Command.RemoveNote(noteId)) =>
+      validateRemoveNote(state, noteId)
+
+    case (None, _) =>
+      Left(NonExistentState)

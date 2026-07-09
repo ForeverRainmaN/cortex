@@ -1,18 +1,15 @@
 package cortex.domain
 
-enum Command:
-  case Start, Complete, Abandon, Resume
-  case Enqueue(id: ContentId, kind: ContentKind)
-  case AddNote(text: Note)
-  case RemoveNote(id: NoteId)
-  case UpdateProgress(position: ContentProgress)
-
 enum DecideError:
   case InvalidTransition(
     command: Command,
     kind: ContentKind,
     status: ContentStatus
   )
+
+  case NoteNotFound(noteId: NoteId)
+
+  case NoteAlreadyExists(noteId: NoteId)
 
   case AlreadyExists(id: ContentId)
 
@@ -29,5 +26,9 @@ enum DecideError:
 
     case AlreadyExists(id: ContentId) =>
       s"content with id=$id already exists"
+
+    case NoteNotFound(noteId) => s"note $noteId not found"
+
+    case NoteAlreadyExists(noteId) => s"note $noteId already exists"
 
     case NonExistentState => "state does not exist"
