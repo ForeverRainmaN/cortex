@@ -2,32 +2,34 @@ package cortex.domain
 
 import cortex.domain.LearningEvent.*
 
-def decide(state: Option[ContentState], command: Command): Either[DecideError, LearningEvent] =
-  def validateStarting(state: ContentState): Either[DecideError, LearningEvent] =
+private type DecideErrorOrEvent = Either[DecideError, LearningEvent]
+
+def decide(state: Option[ContentState], command: Command): DecideErrorOrEvent =
+  def validateStarting(state: ContentState): DecideErrorOrEvent =
     state.status match
       case ContentStatus.InProgress =>
         Left(DecideError.InvalidTransition(Command.Start, state.kind, state.status))
       case _                        => Right(ContentStarted(state.id))
 
-  def validateAbandoning(state: ContentState): Either[DecideError, LearningEvent] =
+  def validateAbandoning(state: ContentState): DecideErrorOrEvent =
     state.status match
       case ContentStatus.Completed =>
         Left(DecideError.InvalidTransition(Command.Abandon, state.kind, state.status))
       case _                       => Right(ContentAbandoned(state.id))
 
-  def validateCompletion(state: ContentState): Either[DecideError, LearningEvent] =
+  def validateCompletion(state: ContentState): DecideErrorOrEvent =
     state.status match
       case ContentStatus.Completed =>
         Left(DecideError.InvalidTransition(Command.Complete, state.kind, state.status))
       case _                       => Right(ContentCompleted(state.id))
 
-  def validateResuming(state: ContentState): Either[DecideError, LearningEvent] =
+  def validateResuming(state: ContentState): DecideErrorOrEvent =
     state.status match
       case ContentStatus.Abandoned => Right(ContentResumed(state.id))
       case _                       =>
         Left(DecideError.InvalidTransition(Command.Resume, state.kind, state.status))
 
-  def validateUpdatingProgress(s: ContentState, progress: ContentProgress): Either[DecideError, LearningEvent] =
+  def validateUpdatingProgress(s: ContentState, progress: ContentProgress): DecideErrorOrEvent =
     s.status match
       case ContentStatus.InProgress =>
         (s.kind, progress) match
@@ -51,5 +53,7 @@ def decide(state: Option[ContentState], command: Command): Either[DecideError, L
       validateUpdatingProgress(s, progress)
     case (Some(s), Command.AddNote(text))            =>
       Right(NoteAdded(s.id, text))
+    case (Some(s), Command.RemoveNote(noteId))       =>
+      Right(NoteRemoved(s.id, noteId))
     case (None, _)                                   =>
       Left(DecideError.NonExistentState)

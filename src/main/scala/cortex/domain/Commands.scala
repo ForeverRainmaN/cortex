@@ -3,6 +3,7 @@ package cortex.domain
 enum Command:
   case Start, Complete, Abandon, Resume
   case AddNote(text: Note)
+  case RemoveNote(id: NoteId)
   case UpdateProgress(position: ContentProgress)
 
 enum DecideError:
