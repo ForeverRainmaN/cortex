@@ -1,0 +1,24 @@
+package cortex.domain
+
+import java.util.UUID
+
+opaque type ContentId = String
+
+object ContentId:
+  def apply(s: String): ContentId = s
+
+opaque type NoteId = UUID
+
+object NoteId:
+  def apply(u: UUID): NoteId        = u
+  def fromString(s: String): NoteId = UUID.fromString(s)
+
+case class Note(id: NoteId, text: String)
+
+opaque type Percentage = Double
+object Percentage:
+  def apply(value: Double): Percentage =
+    if value < 0.0 then 0.0 else if value > 1.0 then 1.0 else value
+  extension (p: Percentage)
+    def toDouble: Double = p
+    def format: String   = f"${p * 100}%.2f%%"
