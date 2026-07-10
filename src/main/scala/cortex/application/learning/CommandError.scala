@@ -1,6 +1,6 @@
-package cortex.application
+package cortex.application.learning
 
-import cortex.domain.DecideError
+import cortex.domain.learning.DecideError
 
 enum CommandError:
   case Validation(error: DecideError)

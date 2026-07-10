@@ -1,5 +1,5 @@
 import cats.effect.{ExitCode, IO, IOApp}
-import cortex.domain.{ContentId, ContentProgress, LearningEvent, Note}
+import cortex.domain.learning.{ContentId, ContentProgress, LearningEvent, Note}
 
 import scala.concurrent.duration.{Duration, DurationInt}
 

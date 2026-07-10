@@ -1,9 +1,10 @@
-package cortex.infrastructure
+package cortex.infrastructure.learning
 
 import cats.effect.IO
 import cats.effect.testing.scalatest.AsyncIOSpec
-import cortex.domain.LearningEvent.{ContentCompleted, ContentQueued, ContentStarted}
-import cortex.domain.{ContentId, ContentKind}
+import cortex.domain.learning.LearningEvent.{ContentCompleted, ContentQueued, ContentStarted}
+import cortex.domain.learning.{ContentId, ContentKind}
+import cortex.infrastructure.learning.InMemoryEventStore
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 

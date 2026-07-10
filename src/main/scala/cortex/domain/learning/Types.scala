@@ -1,4 +1,4 @@
-package cortex.domain
+package cortex.domain.learning
 
 import java.util.UUID
 
