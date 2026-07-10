@@ -1,4 +1,6 @@
-package cortex.domain
+package cortex.domain.learning
+
+import cortex.domain.learning.{ContentState, ContentStatus, LearningEvent}
 
 def evolve(state: Option[ContentState], event: LearningEvent): Option[ContentState] =
   (state, event) match

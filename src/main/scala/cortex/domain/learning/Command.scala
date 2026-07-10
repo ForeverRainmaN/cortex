@@ -1,4 +1,4 @@
-package cortex.domain
+package cortex.domain.learning
 
 enum Command:
   case Start, Complete, Abandon, Resume

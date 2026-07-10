@@ -1,5 +1,6 @@
-package cortex.domain
+package cortex.domain.learning
 
+import cortex.domain.learning.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 

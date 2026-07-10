@@ -1,8 +1,8 @@
-package cortex.domain
+package cortex.domain.learning
 
 import cortex.domain.*
-import cortex.domain.DecideError.*
-import cortex.domain.LearningEvent.*
+import DecideError.*
+import LearningEvent.*
 
 private type DecideErrorOrEvent = Either[DecideError, LearningEvent]
 

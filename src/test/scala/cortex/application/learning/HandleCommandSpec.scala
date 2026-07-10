@@ -1,11 +1,13 @@
-package cortex.application
+package cortex.application.learning
 
 import cats.effect.IO
 import cats.effect.testing.scalatest.AsyncIOSpec
+import cortex.application.learning.{CommandError, handleCommand}
 import cortex.domain.*
-import cortex.domain.ContentKind.Book
-import cortex.domain.LearningEvent.{ContentQueued, ContentStarted}
-import cortex.infrastructure.InMemoryEventStore
+import cortex.domain.learning.ContentKind.Book
+import cortex.domain.learning.LearningEvent.{ContentQueued, ContentStarted}
+import cortex.domain.learning.*
+import cortex.infrastructure.learning.InMemoryEventStore
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 

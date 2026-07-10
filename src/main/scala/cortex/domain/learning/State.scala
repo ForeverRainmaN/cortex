@@ -1,4 +1,4 @@
-package cortex.domain
+package cortex.domain.learning
 
 enum ContentStatus:
   case Todo, InProgress, Completed, Abandoned

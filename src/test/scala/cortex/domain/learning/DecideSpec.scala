@@ -1,11 +1,11 @@
-package cortex.domain
+package cortex.domain.learning
 
-import cortex.domain.Command.*
-import cortex.domain.ContentKind.Book
-import cortex.domain.ContentProgress.{BookAt, VideoAt}
-import cortex.domain.ContentStatus.Completed
-import cortex.domain.DecideError.{InvalidTransition, ProgressKindMismatch}
-import cortex.domain.LearningEvent.*
+import cortex.domain.learning.*
+import cortex.domain.learning.Command.*
+import cortex.domain.learning.ContentProgress.{BookAt, VideoAt}
+import cortex.domain.learning.ContentStatus.Completed
+import cortex.domain.learning.DecideError.{InvalidTransition, ProgressKindMismatch}
+import cortex.domain.learning.LearningEvent.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 

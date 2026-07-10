@@ -1,4 +1,4 @@
-package cortex.domain
+package cortex.domain.learning
 
 import scala.concurrent.duration.Duration
 

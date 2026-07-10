@@ -1,4 +1,6 @@
-package cortex.domain
+package cortex.domain.learning
+
+import cortex.domain.learning.*
 
 trait DomainSpec:
   private val noteIdString1: String = "123e4567-e89b-12d3-a456-426614174000"
