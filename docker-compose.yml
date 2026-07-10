@@ -1,0 +1,13 @@
+services:
+  db:
+    image: postgres
+    container_name: cortex-db
+    restart: always
+    volumes:
+      - "./sql:/docker-entrypoint-initdb.d"
+    environment:
+      - "POSTGRES_USER=docker"
+      - "POSTGRES_PASSWORD=docker"
+      - "POSTGRES_DB=cortex"
+    ports:
+      - "5432:5432"
