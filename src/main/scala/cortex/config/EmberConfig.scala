@@ -3,7 +3,6 @@ package cortex.config
 import com.comcast.ip4s.{Host, Port}
 import pureconfig.ConfigReader
 import pureconfig.error.CannotConvert
-import pureconfig.generic.derivation.*
 
 final case class EmberConfig(host: Host, port: Port) derives ConfigReader
 

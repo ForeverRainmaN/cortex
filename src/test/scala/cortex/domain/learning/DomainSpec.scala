@@ -2,12 +2,18 @@ package cortex.domain.learning
 
 import cortex.domain.learning.*
 
+import java.util.UUID
+
 trait DomainSpec:
-  private val noteIdString1: String = "123e4567-e89b-12d3-a456-426614174000"
-  private val noteIdString2: String = "223e4567-e89b-12d3-a456-426614174001"
-  val contentId: ContentId          = ContentId("id-1")
-  val note1                         = Note(NoteId.fromString(noteIdString1), "test-note")
-  val note2                         = Note(NoteId.fromString(noteIdString2), "test-note")
+  val contentId: ContentId = ContentId("id-1")
+  val note1                = Note(
+    NoteId(UUID.randomUUID()),
+    "test-note"
+  )
+  val note2                = Note(
+    NoteId(UUID.randomUUID()),
+    "test-note"
+  )
 
   val initStateInProgress: Option[ContentState] = createInitialState(ContentStatus.InProgress)
   val initStateTodo: Option[ContentState]       = createInitialState(ContentStatus.Todo)
