@@ -5,7 +5,7 @@ import cats.effect.kernel.Sync
 import cats.syntax.all.*
 import cortex.domain.learning.{ContentId, LearningEvent}
 
-private[infrastructure] class InMemoryEventStore[F[_]: Sync] private (
+final private[infrastructure] class InMemoryEventStore[F[_]: Sync] private (
   val storage: Ref[F, Map[ContentId, List[LearningEvent]]]
 ) extends EventStore[F]:
   override def append(event: LearningEvent): F[Unit] =

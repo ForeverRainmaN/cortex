@@ -17,7 +17,7 @@ lazy val root = rootProject
       "org.tpolecat"          %% "doobie-hikari"                 % "1.0.0-RC12",
       "org.tpolecat"          %% "doobie-postgres"               % "1.0.0-RC12",
       "org.tpolecat"          %% "doobie-scalatest"              % "1.0.0-RC12" % Test,
-      "org.testcontainers"     % "testcontainers"                % "2.0.5"      % Test,
+      "org.testcontainers"     % "testcontainers"                % "1.21.4"     % Test,   // ← both at 1.21.4
       "org.testcontainers"     % "postgresql"                    % "1.21.4"     % Test,
       "org.typelevel"         %% "log4cats-slf4j"                % "2.8.0",
       "org.slf4j"              % "slf4j-simple"                  % "2.0.18",

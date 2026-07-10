@@ -3,7 +3,6 @@ package cortex.application.learning
 import cats.data.EitherT
 import cats.effect.kernel.Sync
 import cats.syntax.either.given
-import cortex.domain.*
 import cortex.domain.learning.*
 import cortex.infrastructure.learning.EventStore
 

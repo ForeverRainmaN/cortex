@@ -1,6 +1,7 @@
 package cortex.domain.learning
 
 import java.util.UUID
+import scala.util.Try
 
 opaque type ContentId = String
 
@@ -10,12 +11,14 @@ object ContentId:
 opaque type NoteId = UUID
 
 object NoteId:
-  def apply(u: UUID): NoteId        = u
-  def fromString(s: String): NoteId = UUID.fromString(s)
+  def apply(u: UUID): NoteId                           = u
+  def fromString(s: String): Either[Throwable, NoteId] =
+    Try(UUID.fromString(s)).toEither
 
-case class Note(id: NoteId, text: String)
+final case class Note(id: NoteId, text: String)
 
 opaque type Percentage = Double
+
 object Percentage:
   def apply(value: Double): Percentage =
     if value < 0.0 then 0.0 else if value > 1.0 then 1.0 else value

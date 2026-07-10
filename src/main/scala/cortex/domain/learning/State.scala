@@ -3,7 +3,7 @@ package cortex.domain.learning
 enum ContentStatus:
   case Todo, InProgress, Completed, Abandoned
 
-case class ContentState(
+final case class ContentState(
   id: ContentId,
   kind: ContentKind,
   status: ContentStatus,
