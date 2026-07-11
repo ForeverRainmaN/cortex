@@ -33,3 +33,10 @@ trait DoobieSpec:
               ce
             )
     yield xa
+
+  def withUsersRepository[A](test: DoobieUserRepository[IO] => IO[A]): IO[A] =
+    transactor.use: xa =>
+      for
+        users  <- DoobieUserRepository[IO](xa)
+        result <- test(users)
+      yield result

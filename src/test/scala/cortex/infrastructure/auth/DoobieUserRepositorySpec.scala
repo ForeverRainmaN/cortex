@@ -28,59 +28,35 @@ class DoobieUserRepositorySpec extends AsyncFlatSpec, AsyncIOSpec, DoobieSpec, M
         user shouldBe Some(testUser)
 
   it should "fail to create a user if email already exists" in:
-    transactor.use: xa =>
-      val program =
-        for
-          users    <- DoobieUserRepository[IO](xa)
-          _        <- users.create(testUser)
-          duplicate = testUser.copy(
-                        id = UserId.generate
-                      )
-          result   <- users.create(duplicate).attempt
-        yield result
-      program.map:
+    withUsersRepository: users =>
+      for
+        _        <- users.create(testUser)
+        duplicate = testUser.copy(id = UserId.generate)
+        result   <- users.create(duplicate).attempt
+      yield result match
         case Left(e: PSQLException) => e.getSQLState shouldBe "23505"
         case _                      => fail("Expected duplicate email error")
 
   it should "retrieve a user by id" in:
-    transactor.use: xa =>
-      val program =
-        for
-          users     <- DoobieUserRepository[IO](xa)
-          _         <- users.create(testUser)
-          maybeUser <- users.find(testUser.id)
-        yield maybeUser
+    withUsersRepository: users =>
+      for
+        _         <- users.create(testUser)
+        maybeUser <- users.find(testUser.id)
+      yield maybeUser shouldBe Some(testUser)
 
-      program.map: user =>
-        user shouldBe Some(testUser)
-
-  it should "return None if trying to retrieve user does not exist" in:
-    transactor.use: xa =>
-      val program =
-        for
-          users     <- DoobieUserRepository[IO](xa)
-          maybeUser <- users.find(testUser.id)
-        yield maybeUser
-      program.map: user =>
-        user shouldBe None
+  it should "return None if trying to retrieve a user that does not exist" in:
+    withUsersRepository: users =>
+      for maybeUser <- users.find(testUser.id)
+      yield maybeUser shouldBe None
 
   it should "delete user by id" in:
-    transactor.use: xa =>
-      val program =
-        for
-          users  <- DoobieUserRepository[IO](xa)
-          _      <- users.create(testUser)
-          result <- users.delete(testUser.id)
-        yield result
-      program.map: isDeleted =>
-        isDeleted shouldBe true
+    withUsersRepository: users =>
+      for
+        _      <- users.create(testUser)
+        result <- users.delete(testUser.id)
+      yield result shouldBe true
 
   it should "NOT delete a user that does not exist" in:
-    transactor.use: xa =>
-      val program =
-        for
-          users  <- DoobieUserRepository[IO](xa)
-          result <- users.delete(testUser.id)
-        yield result
-      program.map: isDeleted =>
-        isDeleted shouldBe false
+    withUsersRepository: users =>
+      for result <- users.delete(testUser.id)
+      yield result shouldBe false
