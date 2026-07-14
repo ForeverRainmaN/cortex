@@ -1,3 +1,5 @@
+package cortex
+
 import cats.effect.kernel.Async
 import cats.effect.{IO, IOApp, Resource}
 import cortex.config.PostgresConfig

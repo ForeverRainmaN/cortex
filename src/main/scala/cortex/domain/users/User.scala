@@ -1,4 +1,4 @@
-package cortex.domain.auth
+package cortex.domain.users
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
