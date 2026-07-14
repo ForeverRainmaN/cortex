@@ -1,8 +1,8 @@
-package cortex.infrastructure.auth
+package cortex.infrastructure.users
 
 import cats.effect.kernel.Async
 import cats.implicits.*
-import cortex.domain.auth.{User, UserId, UserRepository}
+import cortex.domain.users.{User, UserId, UserRepository}
 import doobie.Transactor
 import doobie.implicits.*
 import doobie.postgres.implicits.*

@@ -1,6 +1,7 @@
-package cortex.infrastructure.auth
+package cortex.infrastructure.users
 
 import cats.effect.*
+import cortex.infrastructure.users.DoobieUserRepository
 import doobie.hikari.HikariTransactor
 import doobie.{ExecutionContexts, Transactor}
 import org.testcontainers.containers.PostgreSQLContainer

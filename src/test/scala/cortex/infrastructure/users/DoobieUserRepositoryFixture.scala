@@ -1,6 +1,6 @@
-package cortex.infrastructure.auth
+package cortex.infrastructure.users
 
-import cortex.domain.auth.{Email, HashedPassword, User, UserId}
+import cortex.domain.users.{Email, HashedPassword, User, UserId}
 
 import java.time.Instant
 

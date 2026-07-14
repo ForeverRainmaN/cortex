@@ -1,6 +1,6 @@
-package cortex.infrastructure.auth
+package cortex.infrastructure.users
 
-import cortex.domain.auth.{Email, HashedPassword, UserId}
+import cortex.domain.users.{Email, HashedPassword, UserId}
 import doobie.postgres.implicits.*
 import doobie.util.meta.Meta
 
