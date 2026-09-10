@@ -4,3 +4,8 @@ CREATE TABLE IF NOT EXISTS users (
     hashed_password TEXT NOT NULL,
     created_at      TIMESTAMP WITH TIME ZONE NOT NULL,
 );
+
+CREATE TABLE IF NOT EXISTS events (
+    id              UUID PRIMARY KEY,
+    kind            TEXT NULLABLE
+)

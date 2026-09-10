@@ -2,7 +2,7 @@ package cortex.infrastructure.users
 
 import cats.effect.kernel.Async
 import cats.implicits.*
-import cortex.domain.users.{User, UserId, UserRepository}
+import cortex.domain.users.{Email, User, UserId, UserRepository}
 import doobie.Transactor
 import doobie.implicits.*
 import doobie.postgres.implicits.*
@@ -11,6 +11,10 @@ import org.typelevel.log4cats.Logger
 final class DoobieUserRepository[F[_]: {Async, Logger}] private (xa: Transactor[F]) extends UserRepository[F]:
   override def find(id: UserId): F[Option[User]] =
     sql"SELECT user_id, email, hashed_password, created_at FROM users WHERE user_id = $id"
+      .query[User].option.transact[F](xa)
+
+  override def findByEmail(email: Email): F[Option[User]] =
+    sql"SELECT user_id, email, hashed_password, created_at FROM users WHERE email = $email"
       .query[User].option.transact[F](xa)
 
   override def create(user: User): F[User] =

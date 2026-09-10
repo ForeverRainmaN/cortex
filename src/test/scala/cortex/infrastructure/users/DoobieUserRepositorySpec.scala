@@ -2,7 +2,7 @@ package cortex.infrastructure.users
 
 import cats.effect.IO
 import cats.effect.testing.scalatest.AsyncIOSpec
-import cortex.domain.users.{User, UserId}
+import cortex.domain.users.{Email, User, UserId}
 import cortex.infrastructure.users.DoobieUserRepository
 import doobie.implicits.*
 import doobie.postgres.implicits.*
@@ -49,6 +49,16 @@ class DoobieUserRepositorySpec extends AsyncFlatSpec, AsyncIOSpec, DoobieSpec, M
     withUsersRepository: users =>
       for maybeUser <- users.find(testUser.id)
       yield maybeUser shouldBe None
+
+  it should "retrieve a user by email" in:
+    withUsersRepository: users =>
+      for
+        _ <- users.create(testUser)
+        found <- users.findByEmail(testUser.email)
+        missing <- users.findByEmail(Email("missing@example.com"))
+      yield
+        found shouldBe Some(testUser)
+        missing shouldBe None
 
   it should "delete user by id" in:
     withUsersRepository: users =>
