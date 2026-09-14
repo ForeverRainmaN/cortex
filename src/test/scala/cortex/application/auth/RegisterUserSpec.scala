@@ -4,17 +4,15 @@ import cats.effect.{IO, Ref}
 import cats.effect.testing.scalatest.AsyncIOSpec
 import cats.syntax.all.*
 import cortex.domain.users.{Email, HashedPassword, User, UserId, UserRepository}
+import cortex.infrastructure.auth.BCryptPasswordHasher
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
-import tsec.passwordhashers.PasswordHash
-import tsec.passwordhashers.jca.BCrypt
-
-import java.nio.charset.StandardCharsets.UTF_8
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 class RegisterUserSpec extends AsyncFlatSpec, AsyncIOSpec, Matchers:
+  private val passwordHasher: PasswordHasher[IO] = BCryptPasswordHasher[IO]
   private val email = Email("reader@example.com")
   private val password = "пароль-correct-horse-battery"
   private val existingUser = User.make(
@@ -42,15 +40,12 @@ class RegisterUserSpec extends AsyncFlatSpec, AsyncIOSpec, Matchers:
           IO(assert(requested == email)).as(None)
         override def create(user: User): IO[User] = saved.set(Some(user)).as(user)
       before <- IO.realTimeInstant
-      result <- registerUser(repository, email.value, password)
+      result <- registerUser(repository, passwordHasher, email.value, password)
       after <- IO.realTimeInstant
       stored <- saved.get
       user <- IO.fromEither(result.leftMap(error => new AssertionError(s"Registration failed: $error")))
-      matches <- BCrypt.checkpwBool[IO](password.getBytes(UTF_8), PasswordHash[BCrypt](user.hashedPassword.value))
-      wrongMatches <- BCrypt.checkpwBool[IO](
-                        "секрет-correct-horse-battery".getBytes(UTF_8),
-                        PasswordHash[BCrypt](user.hashedPassword.value)
-                      )
+      matches <- passwordHasher.verify(password, user.hashedPassword)
+      wrongMatches <- passwordHasher.verify("секрет-correct-horse-battery", user.hashedPassword)
     yield
       stored shouldBe Some(user)
       user.email shouldBe email
@@ -63,12 +58,12 @@ class RegisterUserSpec extends AsyncFlatSpec, AsyncIOSpec, Matchers:
       user.createdAt.isAfter(after) shouldBe false
 
   it should "reject an invalid email without accessing the repository" in:
-    registerUser(new StubRepository, "invalid", password).map: result =>
+    registerUser(new StubRepository, passwordHasher, "invalid", password).map: result =>
       result shouldBe Left(RegisterError.InvalidEmail("Invalid email address: invalid"))
 
   it should "reject empty or oversized passwords before accessing the repository" in:
     List("", "a" * 73, "я" * 37).traverse: invalidPassword =>
-      registerUser(new StubRepository, email.value, invalidPassword).map: result =>
+      registerUser(new StubRepository, passwordHasher, email.value, invalidPassword).map: result =>
         result shouldBe Left(RegisterError.InvalidPassword("Password must contain between 1 and 72 UTF-8 bytes"))
     .map(_ => succeed)
 
@@ -77,17 +72,17 @@ class RegisterUserSpec extends AsyncFlatSpec, AsyncIOSpec, Matchers:
       override def findByEmail(email: Email): IO[Option[User]] = IO.pure(None)
       override def create(user: User): IO[User] = IO.pure(user)
 
-    registerUser(repository, email.value, "я" * 36).flatMap:
+    registerUser(repository, passwordHasher, email.value, "я" * 36).flatMap:
       case Left(error) => IO(fail(s"Registration failed: $error"))
       case Right(user) =>
-        BCrypt.checkpwBool[IO](("я" * 36).getBytes(UTF_8), PasswordHash[BCrypt](user.hashedPassword.value)).map: matches =>
+        passwordHasher.verify("я" * 36, user.hashedPassword).map: matches =>
           matches shouldBe true
 
   it should "reject an existing email without creating another user" in:
     val repository = new StubRepository:
       override def findByEmail(email: Email): IO[Option[User]] = IO.pure(Some(existingUser))
 
-    registerUser(repository, email.value, password).map: result =>
+    registerUser(repository, passwordHasher, email.value, password).map: result =>
       result shouldBe Left(RegisterError.EmailAlreadyExists(email))
 
   it should "propagate lookup failures through IO" in:
@@ -95,7 +90,7 @@ class RegisterUserSpec extends AsyncFlatSpec, AsyncIOSpec, Matchers:
     val repository = new StubRepository:
       override def findByEmail(email: Email): IO[Option[User]] = IO.raiseError(failure)
 
-    registerUser(repository, email.value, password).attempt.map: result =>
+    registerUser(repository, passwordHasher, email.value, password).attempt.map: result =>
       result shouldBe Left(failure)
 
   it should "propagate persistence failures through IO" in:
@@ -104,5 +99,5 @@ class RegisterUserSpec extends AsyncFlatSpec, AsyncIOSpec, Matchers:
       override def findByEmail(email: Email): IO[Option[User]] = IO.pure(None)
       override def create(user: User): IO[User] = IO.raiseError(failure)
 
-    registerUser(repository, email.value, password).attempt.map: result =>
+    registerUser(repository, passwordHasher, email.value, password).attempt.map: result =>
       result shouldBe Left(failure)
