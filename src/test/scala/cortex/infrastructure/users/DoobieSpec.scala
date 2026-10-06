@@ -1,8 +1,6 @@
 package cortex.infrastructure.users
 
 import cats.effect.*
-import cortex.domain.users.UserRepository
-import cortex.infrastructure.users.DoobieUserRepository
 import doobie.hikari.HikariTransactor
 import doobie.{ExecutionContexts, Transactor}
 import org.testcontainers.containers.PostgreSQLContainer
@@ -36,9 +34,11 @@ trait DoobieSpec:
             )
     yield xa
 
-  def withUsersRepository[A](test: UserRepository[IO] => IO[A]): IO[A] =
+  def withRepository[R, A](
+    makeRepository: Transactor[IO] => IO[R]
+  )(test: R => IO[A]): IO[A] =
     transactor.use: xa =>
       for
-        users  <- DoobieUserRepository[IO](xa)
-        result <- test(users)
+        repository <- makeRepository(xa)
+        result     <- test(repository)
       yield result
