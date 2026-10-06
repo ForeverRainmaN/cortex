@@ -1,6 +1,7 @@
 package cortex.infrastructure.users
 
 import cats.effect.*
+import cortex.domain.users.UserRepository
 import cortex.infrastructure.users.DoobieUserRepository
 import doobie.hikari.HikariTransactor
 import doobie.{ExecutionContexts, Transactor}
@@ -35,7 +36,7 @@ trait DoobieSpec:
             )
     yield xa
 
-  def withUsersRepository[A](test: DoobieUserRepository[IO] => IO[A]): IO[A] =
+  def withUsersRepository[A](test: UserRepository[IO] => IO[A]): IO[A] =
     transactor.use: xa =>
       for
         users  <- DoobieUserRepository[IO](xa)

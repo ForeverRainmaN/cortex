@@ -1,12 +1,7 @@
 package cortex.infrastructure.users
 
-import cortex.domain.users.{Email, HashedPassword, UserId}
-import doobie.postgres.implicits.*
+import cortex.domain.users.{Email, HashedPassword}
 import doobie.util.meta.Meta
-
-import java.util.UUID
-
-given Meta[UserId] = Meta[UUID].timap(UserId(_))(_.value)
 
 given Meta[Email] = Meta[String].timap(Email(_))(_.value)
 

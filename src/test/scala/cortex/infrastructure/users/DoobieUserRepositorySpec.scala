@@ -4,6 +4,7 @@ import cats.effect.IO
 import cats.effect.testing.scalatest.AsyncIOSpec
 import cortex.domain.users.{Email, User, UserId}
 import cortex.infrastructure.users.DoobieUserRepository
+import cortex.infrastructure.persistence.DoobieMappings.given
 import doobie.implicits.*
 import doobie.postgres.implicits.*
 import doobie.syntax.*
@@ -53,8 +54,8 @@ class DoobieUserRepositorySpec extends AsyncFlatSpec, AsyncIOSpec, DoobieSpec, M
   it should "retrieve a user by email" in:
     withUsersRepository: users =>
       for
-        _ <- users.create(testUser)
-        found <- users.findByEmail(testUser.email)
+        _       <- users.create(testUser)
+        found   <- users.findByEmail(testUser.email)
         missing <- users.findByEmail(Email("missing@example.com"))
       yield
         found shouldBe Some(testUser)
