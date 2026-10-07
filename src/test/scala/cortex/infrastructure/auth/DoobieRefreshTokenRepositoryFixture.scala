@@ -1,7 +1,7 @@
 package cortex.infrastructure.auth
 
 import cats.effect.IO
-import cortex.domain.auth.{RefreshTokenHash, RefreshTokenRecord}
+import cortex.domain.auth.{RefreshTokenHash, RefreshTokenId, RefreshTokenRecord}
 import cortex.domain.users.UserId
 import cortex.infrastructure.persistence.DoobieSpec
 import doobie.Transactor
@@ -15,8 +15,8 @@ trait DoobieRefreshTokenRepositoryFixture:
   self: DoobieSpec =>
 
   protected val testNow: Instant = Instant.parse("2026-10-07T12:00:00Z")
-  protected val testId: UUID =
-    UUID.fromString("00000000-0000-0000-0000-000000000001")
+  protected val testId: RefreshTokenId =
+    RefreshTokenId(UUID.fromString("00000000-0000-0000-0000-000000000001"))
   private val createdAt = Instant.parse("2026-10-06T19:00:00Z")
   private val expiresAt = Instant.parse("2026-11-06T19:00:00Z")
 

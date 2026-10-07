@@ -1,7 +1,6 @@
 package cortex.domain.auth
 
 import java.time.Instant
-import java.util.UUID
 
 trait RefreshTokenRepository[F[_]]:
   def create(token: RefreshTokenRecord): F[Unit]
@@ -12,7 +11,7 @@ trait RefreshTokenRepository[F[_]]:
   ): F[Option[RefreshTokenRecord]]
 
   def revoke(
-    id: UUID,
+    id: RefreshTokenId,
     revokedAt: Instant
   ): F[Boolean]
 

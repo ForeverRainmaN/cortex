@@ -1,7 +1,7 @@
 package cortex.infrastructure.auth
 
 import cats.effect.kernel.Async
-import cortex.domain.auth.{RefreshTokenHash, RefreshTokenRecord, RefreshTokenRepository}
+import cortex.domain.auth.{RefreshTokenHash, RefreshTokenId, RefreshTokenRecord, RefreshTokenRepository}
 import cats.implicits.*
 import doobie.implicits.*
 import doobie.postgres.implicits.*
@@ -9,7 +9,6 @@ import cortex.infrastructure.persistence.DoobieMappings.given
 import doobie.{ConnectionIO, Transactor}
 
 import java.time.Instant
-import java.util.UUID
 
 final private[infrastructure] class DoobieRefreshTokenRepository[F[_]: Async] private (xa: Transactor[F]) extends RefreshTokenRepository[F]:
   override def create(token: RefreshTokenRecord): F[Unit] =
@@ -23,7 +22,7 @@ final private[infrastructure] class DoobieRefreshTokenRepository[F[_]: Async] pr
               AND expires_at > $now
          """.query[RefreshTokenRecord].option.transact(xa)
 
-  override def revoke(id: UUID, revokedAt: Instant): F[Boolean] =
+  override def revoke(id: RefreshTokenId, revokedAt: Instant): F[Boolean] =
     sql"""UPDATE refresh_tokens
             SET revoked_at = $revokedAt
             WHERE id = $id
