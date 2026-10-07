@@ -5,23 +5,23 @@ import cortex.domain.learning.*
 import java.util.UUID
 
 trait DomainSpec:
-  val contentId: ContentId = ContentId("id-1")
-  val note1                = Note(
+  protected val contentId: ContentId = ContentId("id-1")
+  protected val firstNote: Note = Note(
     NoteId(UUID.randomUUID()),
-    "test-note"
+    "first note"
   )
-  val note2                = Note(
+  protected val secondNote: Note = Note(
     NoteId(UUID.randomUUID()),
-    "test-note"
+    "second note"
   )
 
-  val initStateInProgress: Option[ContentState] = createInitialState(ContentStatus.InProgress)
-  val initStateTodo: Option[ContentState]       = createInitialState(ContentStatus.Todo)
-  val initStateAbandoned: Option[ContentState]  = createInitialState(ContentStatus.Abandoned)
-  val initStateCompleted: Option[ContentState]  = createInitialState(ContentStatus.Completed)
-  val initStateEmpty                            = Option.empty[ContentState]
+  protected val stateInProgress: Option[ContentState] = createInitialState(ContentStatus.InProgress)
+  protected val stateTodo: Option[ContentState]       = createInitialState(ContentStatus.Todo)
+  protected val stateAbandoned: Option[ContentState]  = createInitialState(ContentStatus.Abandoned)
+  protected val stateCompleted: Option[ContentState]  = createInitialState(ContentStatus.Completed)
+  protected val emptyState: Option[ContentState]     = None
 
-  def createInitialState(
+  protected def createInitialState(
     status: ContentStatus,
     notes: Vector[Note] = Vector.empty,
     id: ContentId = contentId,

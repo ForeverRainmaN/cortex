@@ -8,7 +8,7 @@ import org.scalatest.matchers.should.Matchers
 
 class InMemoryEventStoreSpec extends AsyncFlatSpec, AsyncIOSpec, Matchers:
   private val contentId  = ContentId("id-1")
-  private val contentId2 = ContentId("id-2")
+  private val otherContentId = ContentId("id-2")
 
   it should "append new event" in:
     for
@@ -46,9 +46,9 @@ class InMemoryEventStoreSpec extends AsyncFlatSpec, AsyncIOSpec, Matchers:
     for
       store   <- InMemoryEventStore.make[IO]
       _       <- store.append(LearningEvent.ContentQueued(contentId, ContentKind.Book))
-      _       <- store.append(LearningEvent.ContentQueued(contentId2, ContentKind.Video))
-      events1 <- store.loadById(contentId)
-      events2 <- store.loadById(contentId2)
+      _              <- store.append(LearningEvent.ContentQueued(otherContentId, ContentKind.Video))
+      eventsForFirst  <- store.loadById(contentId)
+      eventsForOther  <- store.loadById(otherContentId)
     yield
-      events1 shouldBe List(LearningEvent.ContentQueued(contentId, ContentKind.Book))
-      events2 shouldBe List(LearningEvent.ContentQueued(contentId2, ContentKind.Video))
+      eventsForFirst shouldBe List(LearningEvent.ContentQueued(contentId, ContentKind.Book))
+      eventsForOther shouldBe List(LearningEvent.ContentQueued(otherContentId, ContentKind.Video))
