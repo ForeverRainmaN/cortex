@@ -1,7 +1,5 @@
 package cortex.domain.learning
 
-import cortex.domain.learning.{Command, ContentId, ContentKind, ContentProgress, ContentStatus, NoteId}
-
 enum DecideError:
   case InvalidTransition(
     command: Command,

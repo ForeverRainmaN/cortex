@@ -4,7 +4,6 @@ import cats.effect.kernel.Async
 import cats.effect.{IO, IOApp, Resource}
 import cortex.config.PostgresConfig
 import cortex.config.syntax.*
-import doobie.*
 import doobie.hikari.HikariTransactor
 import doobie.implicits.*
 import doobie.util.ExecutionContexts

@@ -4,18 +4,15 @@ import cats.effect.IO
 import cats.effect.testing.scalatest.AsyncIOSpec
 import cortex.domain.auth.RefreshTokenRecord
 import cortex.infrastructure.persistence.DoobieMappings.given
-import cortex.infrastructure.users.DoobieSpec
+import cortex.infrastructure.persistence.DoobieSpec
 import doobie.implicits.*
 import doobie.postgres.implicits.*
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import java.time.Instant
-
 class DoobieRefreshTokenRepositorySpec
   extends AsyncFlatSpec, AsyncIOSpec, DoobieSpec, Matchers, DoobieRefreshTokenRepositoryFixture:
 
-  override val initScript: String = "sql/refresh_tokens.sql"
 
   it should "create a new refresh token" in:
     transactor.use: xa =>
@@ -36,11 +33,11 @@ class DoobieRefreshTokenRepositorySpec
     withRepositoryAndUser(DoobieRefreshTokenRepository[IO](_)): tokens =>
       for
         _          <- tokens.create(testRecord)
-        maybeFound <- tokens.findActiveByHash(testTokenHash, Instant.now())
+        maybeFound <- tokens.findActiveByHash(testTokenHash, testNow)
       yield maybeFound shouldBe Some(testRecord)
 
   it should "fail to find active refresh token by hash if token does not exist" in:
     withRepositoryAndUser(DoobieRefreshTokenRepository[IO](_)): tokens =>
       tokens
-        .findActiveByHash(testTokenHash, Instant.now()).map: notFound =>
+        .findActiveByHash(testTokenHash, testNow).map: notFound =>
           notFound shouldBe None

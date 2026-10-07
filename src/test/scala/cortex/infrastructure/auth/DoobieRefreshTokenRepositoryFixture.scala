@@ -3,7 +3,7 @@ package cortex.infrastructure.auth
 import cats.effect.IO
 import cortex.domain.auth.{RefreshTokenHash, RefreshTokenRecord}
 import cortex.domain.users.UserId
-import cortex.infrastructure.users.DoobieSpec
+import cortex.infrastructure.persistence.DoobieSpec
 import doobie.Transactor
 import doobie.implicits.*
 import doobie.postgres.implicits.*
@@ -14,11 +14,11 @@ import java.util.UUID
 trait DoobieRefreshTokenRepositoryFixture:
   self: DoobieSpec =>
 
-  private val createdAt = Instant.parse("2026-10-06T19:00:00Z")
-  private val expiresAt = Instant.parse("2026-11-06T19:00:00Z")
-
+  protected val testNow: Instant = Instant.parse("2026-10-07T12:00:00Z")
   protected val testId: UUID =
     UUID.fromString("00000000-0000-0000-0000-000000000001")
+  private val createdAt = Instant.parse("2026-10-06T19:00:00Z")
+  private val expiresAt = Instant.parse("2026-11-06T19:00:00Z")
 
   protected val testUserId: UserId =
     UserId.generate
@@ -38,8 +38,17 @@ trait DoobieRefreshTokenRepositoryFixture:
 
   protected def insertUser(xa: Transactor[IO]): IO[Unit] =
     sql"""
-      INSERT INTO users (user_id)
-      VALUES (${testRecord.userId.value})
+      INSERT INTO users (
+        user_id,
+        email,
+        hashed_password,
+        created_at
+      ) VALUES (
+        ${testRecord.userId.value},
+        'refresh-token-test@example.com',
+        'test-hash',
+        ${createdAt}
+      )
     """.update.run
       .transact(xa)
       .void

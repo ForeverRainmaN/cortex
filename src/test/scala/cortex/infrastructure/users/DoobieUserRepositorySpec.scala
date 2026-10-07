@@ -3,8 +3,8 @@ package cortex.infrastructure.users
 import cats.effect.IO
 import cats.effect.testing.scalatest.AsyncIOSpec
 import cortex.domain.users.{Email, User, UserId}
-import cortex.infrastructure.users.DoobieUserRepository
 import cortex.infrastructure.persistence.DoobieMappings.given
+import cortex.infrastructure.persistence.DoobieSpec
 import doobie.implicits.*
 import doobie.postgres.implicits.*
 import org.postgresql.util.PSQLException
@@ -12,8 +12,6 @@ import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 class DoobieUserRepositorySpec extends AsyncFlatSpec, AsyncIOSpec, DoobieSpec, Matchers, DoobieUserRepositoryFixture:
-  val initScript: String = "sql/users.sql"
-
   it should "create new user" in:
     transactor.use: xa =>
       val program =

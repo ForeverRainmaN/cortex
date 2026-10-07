@@ -1,4 +1,4 @@
-package cortex.infrastructure.users
+package cortex.infrastructure.persistence
 
 import cats.effect.*
 import doobie.hikari.HikariTransactor
@@ -8,13 +8,13 @@ import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 trait DoobieSpec:
-  val initScript: String
+  private val schemaScript = "db/schema.sql"
 
   given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
   val postgres: Resource[IO, PostgreSQLContainer[Nothing]] =
     val acquire = IO:
-      val container: PostgreSQLContainer[Nothing] = new PostgreSQLContainer("postgres").withInitScript(initScript)
+      val container: PostgreSQLContainer[Nothing] = new PostgreSQLContainer("postgres").withInitScript(schemaScript)
       container.start()
       container
 
