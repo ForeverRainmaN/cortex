@@ -1,13 +1,15 @@
 package cortex.infrastructure.auth
 
 import cats.effect.IO
+import cats.effect.std.UUIDGen
 import cats.effect.testing.scalatest.AsyncIOSpec
+import cats.implicits.*
 import cortex.domain.auth.{RefreshTokenHash, RefreshTokenId}
 import cortex.infrastructure.persistence.DoobieSpec
 import doobie.implicits.*
+import org.postgresql.util.PSQLException
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
-
 class DoobieRefreshTokenRepositorySpec
   extends AsyncFlatSpec, AsyncIOSpec, DoobieSpec, Matchers, DoobieRefreshTokenRepositoryFixture:
 
@@ -78,20 +80,20 @@ class DoobieRefreshTokenRepositorySpec
 
   it should "return false if the token id is unknown" in:
     withRepository(DoobieRefreshTokenRepository[IO](_)): tokens =>
-      tokens
-        .revoke(RefreshTokenId.generate, referenceTime).map: revoked =>
-          revoked shouldBe false
+      for
+        unknownId <- UUIDGen.randomUUID[IO].map(RefreshTokenId(_))
+        revoked   <- tokens.revoke(unknownId, referenceTime)
+      yield revoked shouldBe false
 
   it should "successfully rotate old token and add a replacement" in:
-    val replacementRecord =
-      refreshTokenRecord.copy(
-        id = RefreshTokenId.generate,
-        createdAt = referenceTime,
-        tokenHash = RefreshTokenHash("new-hash")
-      )
-
     withToken(refreshTokenRecord): (tokens, xa) =>
       for
+        replacementId     <- UUIDGen.randomUUID[IO].map(RefreshTokenId(_))
+        replacementRecord  = refreshTokenRecord.copy(
+                               id = replacementId,
+                               createdAt = referenceTime,
+                               tokenHash = RefreshTokenHash("new-hash")
+                             )
         rotated           <- tokens.rotate(
                                refreshTokenRecord.tokenHash,
                                replacementRecord,
@@ -105,15 +107,14 @@ class DoobieRefreshTokenRepositorySpec
         replacementFromDb shouldBe Some(replacementRecord)
 
   it should "return false when trying to rotate old record that does not exist" in:
-    val replacementRecord =
-      refreshTokenRecord.copy(
-        id = RefreshTokenId.generate,
-        createdAt = referenceTime,
-        tokenHash = RefreshTokenHash("new-hash")
-      )
-
     withRefreshTokenRepository: (tokens, xa) =>
       for
+        replacementId     <- UUIDGen.randomUUID[IO].map(RefreshTokenId(_))
+        replacementRecord  = refreshTokenRecord.copy(
+                               id = replacementId,
+                               createdAt = referenceTime,
+                               tokenHash = RefreshTokenHash("new-hash")
+                             )
         rotated           <- tokens.rotate(refreshTokenRecord.tokenHash, replacementRecord, referenceTime)
         replacementFromDb <- readRefreshTokenRecord(replacementRecord.id).transact(xa)
       yield
@@ -122,14 +123,15 @@ class DoobieRefreshTokenRepositorySpec
 
   it should "return false when trying to rotate a record that has an expired refresh token" in:
     val expiredTokenRecord = refreshTokenRecord.copy(expiresAt = referenceTime.minusSeconds(60))
-    val replacementRecord  =
-      refreshTokenRecord.copy(
-        id = RefreshTokenId.generate,
-        createdAt = referenceTime,
-        tokenHash = RefreshTokenHash("new-hash")
-      )
+
     withToken(expiredTokenRecord): (tokens, xa) =>
       for
+        replacementId     <- UUIDGen.randomUUID[IO].map(RefreshTokenId(_))
+        replacementRecord  = refreshTokenRecord.copy(
+                               id = replacementId,
+                               createdAt = referenceTime,
+                               tokenHash = RefreshTokenHash("new-hash")
+                             )
         rotated           <- tokens.rotate(expiredTokenRecord.tokenHash, replacementRecord, referenceTime)
         oldRecord         <- readRefreshTokenRecord(expiredTokenRecord.id).transact(xa)
         replacementFromDb <- readRefreshTokenRecord(replacementRecord.id).transact(xa)
@@ -139,16 +141,16 @@ class DoobieRefreshTokenRepositorySpec
         replacementFromDb shouldBe None
 
   it should "return false when trying to rotate a record that has a revoked refresh token" in:
-    val replacementRecord =
-      refreshTokenRecord.copy(
-        id = RefreshTokenId.generate,
-        createdAt = referenceTime,
-        tokenHash = RefreshTokenHash("new-hash")
-      )
     val revokedTokenRecord = refreshTokenRecord.copy(revokedAt = Some(referenceTime))
 
     withToken(revokedTokenRecord): (tokens, xa) =>
       for
+        replacementId     <- UUIDGen.randomUUID[IO].map(RefreshTokenId(_))
+        replacementRecord  = refreshTokenRecord.copy(
+                               id = replacementId,
+                               createdAt = referenceTime,
+                               tokenHash = RefreshTokenHash("new-hash")
+                             )
         rotated           <- tokens.rotate(revokedTokenRecord.tokenHash, replacementRecord, referenceTime)
         oldRecord         <- readRefreshTokenRecord(revokedTokenRecord.id).transact(xa)
         replacementFromDb <- readRefreshTokenRecord(replacementRecord.id).transact(xa)
@@ -157,7 +159,71 @@ class DoobieRefreshTokenRepositorySpec
         oldRecord shouldBe Some(revokedTokenRecord)
         replacementFromDb shouldBe None
 
-  /*
-  5. Ошибка вставки replacement: транзакция откатывается, старый остаётся активным.
-  6. Две параллельные ротации: ровно одна успешна, сохранён только её replacement.
-   */
+  it should "rollback revocation when replacement cannot be inserted" in:
+    withToken(refreshTokenRecord): (tokens, xa) =>
+      for
+        replacementId <- UUIDGen.randomUUID[IO].map(RefreshTokenId(_))
+
+        replacementRecord =
+          refreshTokenRecord.copy(id = replacementId)
+
+        result <- tokens
+                    .rotate(
+                      refreshTokenRecord.tokenHash,
+                      replacementRecord,
+                      referenceTime
+                    )
+                    .attempt
+
+        oldRecord         <- readRefreshTokenRecord(refreshTokenRecord.id).transact(xa)
+        replacementFromDb <- readRefreshTokenRecord(replacementRecord.id).transact(xa)
+      yield
+        result match
+          case Left(error: PSQLException) =>
+            error.getSQLState shouldBe "23505"
+          case _                          =>
+            fail("Expected replacement insertion to fail")
+
+        oldRecord shouldBe Some(refreshTokenRecord)
+        replacementFromDb shouldBe None
+
+  it should "allow only one concurrent rotation" in:
+    withToken(refreshTokenRecord): (tokens, xa) =>
+      for
+        firstId  <- UUIDGen.randomUUID[IO].map(RefreshTokenId(_))
+        secondId <- UUIDGen.randomUUID[IO].map(RefreshTokenId(_))
+
+        firstReplacement =
+          refreshTokenRecord.copy(
+            id = firstId,
+            tokenHash = RefreshTokenHash("first-replacement"),
+            createdAt = referenceTime
+          )
+
+        secondReplacement =
+          refreshTokenRecord.copy(
+            id = secondId,
+            tokenHash = RefreshTokenHash("second-replacement"),
+            createdAt = referenceTime
+          )
+
+        results <- (
+                     tokens.rotate(
+                       refreshTokenRecord.tokenHash,
+                       firstReplacement,
+                       referenceTime
+                     ),
+                     tokens.rotate(
+                       refreshTokenRecord.tokenHash,
+                       secondReplacement,
+                       referenceTime
+                     )
+                   ).parTupled
+
+        oldRecord    <- readRefreshTokenRecord(refreshTokenRecord.id).transact(xa)
+        firstFromDb  <- readRefreshTokenRecord(firstReplacement.id).transact(xa)
+        secondFromDb <- readRefreshTokenRecord(secondReplacement.id).transact(xa)
+      yield
+        results.count(identity) shouldBe 1
+        oldRecord shouldBe Some(refreshTokenRecord.copy(revokedAt = Some(referenceTime)))
+        List(firstFromDb, secondFromDb).flatten.size shouldBe 1

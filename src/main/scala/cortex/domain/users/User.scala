@@ -22,9 +22,6 @@ object UserId:
   def fromString(s: String): Either[Throwable, UserId] =
     Try(UUID.fromString(s)).toEither
 
-  def generate: UserId =
-    UUID.randomUUID()
-
   extension (userId: UserId) def value: UUID = userId
 
 opaque type Email = String

@@ -19,7 +19,9 @@ trait DoobieRefreshTokenRepositoryFixture:
   protected val createdAt: Instant     = Instant.parse("2026-10-06T19:00:00Z")
   protected val expiresAt: Instant     = Instant.parse("2026-11-06T19:00:00Z")
 
-  protected val userId: UserId = UserId.generate
+  protected val userId: UserId = UserId(
+    UUID.fromString("00000000-0000-0000-0000-000000000002")
+  )
 
   protected val refreshTokenId: RefreshTokenId = RefreshTokenId(
     UUID.fromString("00000000-0000-0000-0000-000000000001")

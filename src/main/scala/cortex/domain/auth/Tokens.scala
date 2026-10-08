@@ -6,7 +6,6 @@ opaque type RefreshTokenId = UUID
 
 object RefreshTokenId:
   def apply(value: UUID): RefreshTokenId = value
-  def generate: RefreshTokenId = UUID.randomUUID()
 
   extension (id: RefreshTokenId) def value: UUID = id
 

@@ -1,6 +1,7 @@
 package cortex.infrastructure.users
 
 import cats.effect.IO
+import cats.effect.std.UUIDGen
 import cats.effect.testing.scalatest.AsyncIOSpec
 import cortex.domain.users.{Email, User, UserId}
 import cortex.infrastructure.persistence.DoobieMappings.given
@@ -29,9 +30,10 @@ class DoobieUserRepositorySpec extends AsyncFlatSpec, AsyncIOSpec, DoobieSpec, M
   it should "fail to create a user if email already exists" in:
     withRepository(DoobieUserRepository[IO](_)): users =>
       for
-        _         <- users.create(user)
-        duplicate  = user.copy(id = UserId.generate)
-        result    <- users.create(duplicate).attempt
+        _           <- users.create(user)
+        duplicateId <- UUIDGen.randomUUID[IO].map(UserId(_))
+        duplicate    = user.copy(id = duplicateId)
+        result      <- users.create(duplicate).attempt
       yield result match
         case Left(e: PSQLException) => e.getSQLState shouldBe "23505"
         case _                      => fail("Expected duplicate email error")

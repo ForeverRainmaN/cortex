@@ -1,26 +1,30 @@
 package cortex.domain.learning
 
-import cortex.domain.learning.{ContentState, ContentStatus, LearningEvent}
-
 def evolve(state: Option[ContentState], event: LearningEvent): Option[ContentState] =
-  (state, event) match
-    case (None, LearningEvent.ContentQueued(id, kind))         =>
-      Some(ContentState.initial(id, kind))
-    case (Some(s), LearningEvent.ContentStarted(_))            =>
-      Some(s.copy(status = ContentStatus.InProgress))
-    case (Some(s), LearningEvent.ContentCompleted(_))          =>
-      Some(s.copy(status = ContentStatus.Completed))
-    case (Some(s), LearningEvent.ContentAbandoned(_))          =>
-      Some(s.copy(status = ContentStatus.Abandoned))
-    case (Some(s), LearningEvent.ProgressUpdated(_, position)) =>
-      Some(s.copy(progress = Some(position)))
-    case (Some(s), LearningEvent.ContentResumed(_))            =>
-      Some(s.copy(status = ContentStatus.InProgress))
-    case (Some(s), LearningEvent.NoteAdded(_, note))           =>
-      Some(s.copy(notes = s.notes :+ note))
-    case (Some(s), LearningEvent.NoteRemoved(_, noteId))       =>
-      Some(s.copy(notes = s.notes.filterNot(_.id == noteId)))
-    case (state, _)                                            => state
+  event match
+    case LearningEvent.ContentQueued(id, kind) =>
+      state.orElse(Some(ContentState.initial(id, kind)))
+
+    case LearningEvent.ContentStarted(_) =>
+      state.map(_.copy(status = ContentStatus.InProgress))
+
+    case LearningEvent.ContentCompleted(_) =>
+      state.map(_.copy(status = ContentStatus.Completed))
+
+    case LearningEvent.ContentAbandoned(_) =>
+      state.map(_.copy(status = ContentStatus.Abandoned))
+
+    case LearningEvent.ProgressUpdated(_, position) =>
+      state.map(_.copy(progress = Some(position)))
+
+    case LearningEvent.ContentResumed(_) =>
+      state.map(_.copy(status = ContentStatus.InProgress))
+
+    case LearningEvent.NoteAdded(_, note) =>
+      state.map(s => s.copy(notes = s.notes :+ note))
+
+    case LearningEvent.NoteRemoved(_, noteId) =>
+      state.map(s => s.copy(notes = s.notes.filterNot(_.id == noteId)))
 
 def fold(events: List[LearningEvent]): Option[ContentState] =
   events.foldLeft(Option.empty[ContentState])(evolve)
@@ -28,5 +32,5 @@ def fold(events: List[LearningEvent]): Option[ContentState] =
 def foldAll(events: List[LearningEvent]): Map[ContentId, ContentState] =
   events
     .groupBy(_.id)
-    .flatMap: (id, events) =>
-      fold(events).map(id -> _)
+    .flatMap: (id, groupedEvents) =>
+      fold(groupedEvents).map(id -> _)

@@ -7,11 +7,11 @@ import java.util.UUID
 trait DomainSpec:
   protected val contentId: ContentId = ContentId("id-1")
   protected val firstNote: Note = Note(
-    NoteId(UUID.randomUUID()),
+    NoteId(UUID.fromString("00000000-0000-0000-0000-000000000001")),
     "first note"
   )
   protected val secondNote: Note = Note(
-    NoteId(UUID.randomUUID()),
+    NoteId(UUID.fromString("00000000-0000-0000-0000-000000000002")),
     "second note"
   )
 
