@@ -35,10 +35,7 @@ trait DoobieSpec:
     yield xa
 
   def withRepository[R, A](
-    makeRepository: Transactor[IO] => IO[R]
+    makeRepository: Transactor[IO] => R
   )(test: R => IO[A]): IO[A] =
     transactor.use: xa =>
-      for
-        repository <- makeRepository(xa)
-        result     <- test(repository)
-      yield result
+      test(makeRepository(xa))

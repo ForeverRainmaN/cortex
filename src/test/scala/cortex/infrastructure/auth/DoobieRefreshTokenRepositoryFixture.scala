@@ -88,7 +88,7 @@ trait DoobieRefreshTokenRepositoryFixture:
     transactor.use: xa =>
       for
         _          <- insertUser(xa)
-        repository <- DoobieRefreshTokenRepository[IO](xa)
+        repository  = DoobieRefreshTokenRepository[IO](xa)
         result     <- test(repository, xa)
       yield result
 

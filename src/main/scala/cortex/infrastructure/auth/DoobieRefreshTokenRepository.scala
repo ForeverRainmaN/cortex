@@ -62,5 +62,5 @@ final private[infrastructure] class DoobieRefreshTokenRepository[F[_]: Async] pr
           )""".update.run
 
 object DoobieRefreshTokenRepository:
-  def apply[F[_]: Async](xa: Transactor[F]): F[RefreshTokenRepository[F]] =
-    Async[F].pure(new DoobieRefreshTokenRepository[F](xa))
+  def apply[F[_]: Async](xa: Transactor[F]): RefreshTokenRepository[F] =
+    new DoobieRefreshTokenRepository[F](xa)

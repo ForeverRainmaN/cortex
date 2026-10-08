@@ -41,5 +41,5 @@ final private[infrastructure] class DoobieUserRepository[F[_]: {Async, Logger}] 
       .transact(xa)
 
 object DoobieUserRepository:
-  def apply[F[_]: {Async, Logger}](xa: Transactor[F]): F[UserRepository[F]] =
-    Async[F].pure(new DoobieUserRepository[F](xa))
+  def apply[F[_]: {Async, Logger}](xa: Transactor[F]): UserRepository[F] =
+    new DoobieUserRepository[F](xa)

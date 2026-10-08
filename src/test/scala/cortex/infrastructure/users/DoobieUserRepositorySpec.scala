@@ -17,7 +17,7 @@ class DoobieUserRepositorySpec extends AsyncFlatSpec, AsyncIOSpec, DoobieSpec, M
     transactor.use: xa =>
       val program =
         for
-          users     <- DoobieUserRepository[IO](xa)
+          users      = DoobieUserRepository[IO](xa)
           _         <- users.create(user)
           maybeUser <- sql"SELECT * FROM users WHERE user_id = ${user.id}"
                          .query[User]
