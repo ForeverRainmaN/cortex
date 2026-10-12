@@ -1,12 +1,12 @@
 package cortex.domain.learning
 
-import cortex.domain.*
 import DecideError.*
 import LearningEvent.*
 
 private type DecideErrorOrEvent = Either[DecideError, LearningEvent]
 
 def decide(
+  id: ContentId,
   state: Option[ContentState],
   command: Command
 ): DecideErrorOrEvent =
@@ -35,7 +35,7 @@ def decide(
       case ContentStatus.InProgress =>
         Either.cond(
           progress.matches(state.kind),
-          ProgressUpdated(state.id, progress),
+          ProgressUpdated(id, progress),
           ProgressKindMismatch(state.kind, progress)
         )
 
@@ -53,7 +53,7 @@ def decide(
   ): DecideErrorOrEvent =
     Either.cond(
       !state.notes.exists(_.id == note.id),
-      NoteAdded(state.id, note),
+      NoteAdded(id, note),
       NoteAlreadyExists(note.id)
     )
 
@@ -63,16 +63,16 @@ def decide(
   ): DecideErrorOrEvent =
     Either.cond(
       state.notes.exists(_.id == noteId),
-      NoteRemoved(state.id, noteId),
+      NoteRemoved(id, noteId),
       NoteNotFound(noteId)
     )
 
   (state, command) match
 
-    case (None, Command.Enqueue(id, kind)) =>
+    case (None, Command.Enqueue(kind)) =>
       Right(ContentQueued(id, kind))
 
-    case (Some(_), Command.Enqueue(id, _)) =>
+    case (Some(_), Command.Enqueue(_)) =>
       Left(AlreadyExists(id))
 
     case (Some(state), Command.Start) =>
@@ -81,7 +81,7 @@ def decide(
         Command.Start,
         Set(ContentStatus.InProgress)
       ):
-        ContentStarted(state.id)
+        ContentStarted(id)
 
     case (Some(state), Command.Complete) =>
       transition(
@@ -89,7 +89,7 @@ def decide(
         Command.Complete,
         Set(ContentStatus.Completed)
       ):
-        ContentCompleted(state.id)
+        ContentCompleted(id)
 
     case (Some(state), Command.Abandon) =>
       transition(
@@ -97,7 +97,7 @@ def decide(
         Command.Abandon,
         Set(ContentStatus.Completed)
       ):
-        ContentAbandoned(state.id)
+        ContentAbandoned(id)
 
     case (Some(state), Command.Resume) =>
       transition(
@@ -109,7 +109,7 @@ def decide(
           ContentStatus.Completed
         )
       ):
-        ContentResumed(state.id)
+        ContentResumed(id)
 
     case (Some(state), Command.UpdateProgress(progress)) =>
       validateUpdatingProgress(state, progress)

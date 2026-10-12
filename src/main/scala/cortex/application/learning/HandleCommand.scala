@@ -10,6 +10,6 @@ def handleCommand[F[_]: Sync](store: EventStore[F])(id: ContentId, command: Comm
   (for
     events <- EitherT.liftF(store.loadById(id))
     state   = events.foldLeft(Option.empty[ContentState])(evolve)
-    event  <- EitherT.fromEither[F](decide(state, command).leftMap(CommandError.Validation(_)))
+    event  <- EitherT.fromEither[F](decide(id, state, command).leftMap(CommandError.Validation(_)))
     _      <- EitherT.liftF(store.append(event))
   yield ()).value
