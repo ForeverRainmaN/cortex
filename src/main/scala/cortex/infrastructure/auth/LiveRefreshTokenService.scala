@@ -101,3 +101,12 @@ final private[infrastructure] class LiveRefreshTokenService[F[_]: {Monad, Clock,
       oldTokenHash        <- refreshTokenHasher.hash(token)
       maybeOldTokenRecord <- repository.findActiveByHash(oldTokenHash, timestamp)
     yield maybeOldTokenRecord
+
+object LiveRefreshTokenService:
+  def apply[F[_]: {Monad, Clock, UUIDGen}](
+    repository: RefreshTokenRepository[F],
+    refreshTokenGenerator: RefreshTokenGenerator[F],
+    refreshTokenHasher: RefreshTokenHasher[F],
+    refreshTokenTtl: FiniteDuration
+  ): RefreshTokenService[F] =
+    new LiveRefreshTokenService[F](repository, refreshTokenGenerator, refreshTokenHasher, refreshTokenTtl)
