@@ -2,7 +2,7 @@ package cortex.application.auth
 
 import cats.effect.IO
 import cats.effect.testing.scalatest.AsyncIOSpec
-import cortex.domain.users.{Email, HashedPassword, User, UserId, UserRepository}
+import cortex.domain.users.{CreateUserError, Email, User, UserId, UserRepository}
 import cortex.infrastructure.auth.BCryptPasswordHasher
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -28,7 +28,7 @@ class LoginUserSpec extends AsyncFlatSpec, AsyncIOSpec, Matchers:
       IO.raiseError(new AssertionError("Unexpected find"))
     override def findByEmail(email: Email): IO[Option[User]] =
       IO.raiseError(new AssertionError("Unexpected findByEmail"))
-    override def create(user: User): IO[User] =
+    override def create(user: User): IO[Either[CreateUserError, User]] =
       IO.raiseError(new AssertionError("Unexpected create"))
     override def delete(id: UserId): IO[Boolean] =
       IO.raiseError(new AssertionError("Unexpected delete"))

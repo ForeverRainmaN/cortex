@@ -3,7 +3,7 @@ package cortex.application.auth
 import cats.effect.{IO, Ref}
 import cats.effect.testing.scalatest.AsyncIOSpec
 import cats.syntax.all.*
-import cortex.domain.users.{Email, HashedPassword, User, UserId, UserRepository}
+import cortex.domain.users.{CreateUserError, Email, HashedPassword, User, UserId, UserRepository}
 import cortex.infrastructure.auth.BCryptPasswordHasher
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -27,7 +27,7 @@ class RegisterUserSpec extends AsyncFlatSpec, AsyncIOSpec, Matchers:
       IO.raiseError(new AssertionError("Unexpected find"))
     override def findByEmail(email: Email): IO[Option[User]] =
       IO.raiseError(new AssertionError("Unexpected findByEmail"))
-    override def create(user: User): IO[User] =
+    override def create(user: User): IO[Either[CreateUserError, User]] =
       IO.raiseError(new AssertionError("Unexpected create"))
     override def delete(id: UserId): IO[Boolean] =
       IO.raiseError(new AssertionError("Unexpected delete"))
@@ -38,7 +38,8 @@ class RegisterUserSpec extends AsyncFlatSpec, AsyncIOSpec, Matchers:
       repository = new StubRepository:
         override def findByEmail(requested: Email): IO[Option[User]] =
           IO(assert(requested == email)).as(None)
-        override def create(user: User): IO[User] = saved.set(Some(user)).as(user)
+        override def create(user: User): IO[Either[CreateUserError, User]] =
+          saved.set(Some(user)).as(Right(user))
       before <- IO.realTimeInstant
       result <- registerUser(repository, passwordHasher, email.value, password)
       after <- IO.realTimeInstant
@@ -70,7 +71,7 @@ class RegisterUserSpec extends AsyncFlatSpec, AsyncIOSpec, Matchers:
   it should "accept a password of exactly 72 UTF-8 bytes" in:
     val repository = new StubRepository:
       override def findByEmail(email: Email): IO[Option[User]] = IO.pure(None)
-      override def create(user: User): IO[User] = IO.pure(user)
+      override def create(user: User): IO[Either[CreateUserError, User]] = IO.pure(Right(user))
 
     registerUser(repository, passwordHasher, email.value, "я" * 36).flatMap:
       case Left(error) => IO(fail(s"Registration failed: $error"))
@@ -81,6 +82,15 @@ class RegisterUserSpec extends AsyncFlatSpec, AsyncIOSpec, Matchers:
   it should "reject an existing email without creating another user" in:
     val repository = new StubRepository:
       override def findByEmail(email: Email): IO[Option[User]] = IO.pure(Some(existingUser))
+
+    registerUser(repository, passwordHasher, email.value, password).map: result =>
+      result shouldBe Left(RegisterError.EmailAlreadyExists(email))
+
+  it should "return EmailAlreadyExists when the email is taken concurrently after the lookup" in:
+    val repository = new StubRepository:
+      override def findByEmail(email: Email): IO[Option[User]] = IO.pure(None)
+      override def create(user: User): IO[Either[CreateUserError, User]] =
+        IO.pure(Left(CreateUserError.EmailAlreadyExists(user.email)))
 
     registerUser(repository, passwordHasher, email.value, password).map: result =>
       result shouldBe Left(RegisterError.EmailAlreadyExists(email))
@@ -97,7 +107,7 @@ class RegisterUserSpec extends AsyncFlatSpec, AsyncIOSpec, Matchers:
     val failure = new RuntimeException("Insert failed")
     val repository = new StubRepository:
       override def findByEmail(email: Email): IO[Option[User]] = IO.pure(None)
-      override def create(user: User): IO[User] = IO.raiseError(failure)
+      override def create(user: User): IO[Either[CreateUserError, User]] = IO.raiseError(failure)
 
     registerUser(repository, passwordHasher, email.value, password).attempt.map: result =>
       result shouldBe Left(failure)

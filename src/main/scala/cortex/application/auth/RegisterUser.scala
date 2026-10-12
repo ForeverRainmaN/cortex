@@ -4,7 +4,7 @@ import cats.data.EitherT
 import cats.effect.Clock
 import cats.effect.kernel.Async
 import cats.effect.std.UUIDGen
-import cortex.domain.users.{Email, HashedPassword, User, UserId, UserRepository}
+import cortex.domain.users.{CreateUserError, Email, HashedPassword, User, UserId, UserRepository}
 import cats.implicits.*
 
 def registerUser[F[_]: Async](
@@ -21,5 +21,6 @@ def registerUser[F[_]: Async](
     hash       <- EitherT.liftF(passwordHasher.hash(rawPassword))
     timestamp  <- EitherT.liftF(Clock[F].realTimeInstant)
     id         <- EitherT.liftF(UUIDGen.randomUUID[F].map(UserId(_)))
-    user       <- EitherT.liftF(userRepository.create(User.make(id, validEmail, hash, timestamp)))
+    user       <- EitherT(userRepository.create(User.make(id, validEmail, hash, timestamp))).leftMap:
+                    case CreateUserError.EmailAlreadyExists(email) => RegisterError.EmailAlreadyExists(email)
   yield user).value

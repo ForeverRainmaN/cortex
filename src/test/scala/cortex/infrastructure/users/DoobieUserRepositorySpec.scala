@@ -3,7 +3,7 @@ package cortex.infrastructure.users
 import cats.effect.IO
 import cats.effect.std.UUIDGen
 import cats.effect.testing.scalatest.AsyncIOSpec
-import cortex.domain.users.{Email, User, UserId}
+import cortex.domain.users.{CreateUserError, Email, User, UserId}
 import cortex.infrastructure.persistence.DoobieMappings.given
 import cortex.infrastructure.persistence.DoobieSpec
 import doobie.implicits.*
@@ -18,25 +18,36 @@ class DoobieUserRepositorySpec extends AsyncFlatSpec, AsyncIOSpec, DoobieSpec, M
       val program =
         for
           users      = DoobieUserRepository[IO](xa)
-          _         <- users.create(user)
+          created   <- users.create(user)
           maybeUser <- sql"SELECT * FROM users WHERE user_id = ${user.id}"
                          .query[User]
                          .option
                          .transact(xa)
-        yield maybeUser
-      program.map: savedUser =>
+        yield (created, maybeUser)
+      program.map: (created, savedUser) =>
+        created shouldBe Right(user)
         savedUser shouldBe Some(user)
 
-  it should "fail to create a user if email already exists" in:
+  it should "return EmailAlreadyExists without inserting a user if email already exists" in:
     withRepository(DoobieUserRepository[IO](_)): users =>
       for
-        _           <- users.create(user)
-        duplicateId <- UUIDGen.randomUUID[IO].map(UserId(_))
-        duplicate    = user.copy(id = duplicateId)
-        result      <- users.create(duplicate).attempt
+        _              <- users.create(user)
+        duplicateId    <- UUIDGen.randomUUID[IO].map(UserId(_))
+        duplicate       = user.copy(id = duplicateId)
+        result         <- users.create(duplicate)
+        maybeDuplicate <- users.find(duplicateId)
+      yield
+        result shouldBe Left(CreateUserError.EmailAlreadyExists(user.email))
+        maybeDuplicate shouldBe None
+
+  it should "fail with a unique violation if user id already exists" in:
+    withRepository(DoobieUserRepository[IO](_)): users =>
+      for
+        _      <- users.create(user)
+        result <- users.create(user.copy(email = Email("another@example.com"))).attempt
       yield result match
         case Left(e: PSQLException) => e.getSQLState shouldBe "23505"
-        case _                      => fail("Expected duplicate email error")
+        case _                      => fail("Expected duplicate user id error")
 
   it should "retrieve a user by id" in:
     withRepository(DoobieUserRepository[IO](_)): users =>
