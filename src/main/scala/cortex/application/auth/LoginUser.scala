@@ -1,11 +1,11 @@
 package cortex.application.auth
 
+import cats.Monad
 import cats.data.EitherT
-import cats.effect.kernel.Async
 import cats.implicits.*
 import cortex.domain.users.{Email, User, UserRepository}
 
-def loginUser[F[_]: Async](
+def loginUser[F[_]: Monad](
   userRepository: UserRepository[F],
   passwordHasher: PasswordHasher[F],
   email: String,

@@ -1,13 +1,13 @@
 package cortex.application.auth
 
+import cats.Monad
 import cats.data.EitherT
 import cats.effect.Clock
-import cats.effect.kernel.Async
 import cats.effect.std.UUIDGen
 import cortex.domain.users.{CreateUserError, Email, HashedPassword, User, UserId, UserRepository}
 import cats.implicits.*
 
-def registerUser[F[_]: Async](
+def registerUser[F[_]: {Monad, Clock, UUIDGen}](
   userRepository: UserRepository[F],
   passwordHasher: PasswordHasher[F],
   email: String,

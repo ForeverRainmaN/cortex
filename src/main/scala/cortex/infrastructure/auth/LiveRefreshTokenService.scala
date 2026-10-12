@@ -1,7 +1,8 @@
 package cortex.infrastructure.auth
 
+import cats.Monad
 import cats.data.EitherT
-import cats.effect.kernel.{Async, Clock}
+import cats.effect.kernel.Clock
 import cats.effect.std.UUIDGen
 import cortex.domain.auth.{
   RefreshToken,
@@ -27,7 +28,7 @@ final private case class GeneratedRefreshToken(
   value: RefreshToken
 )
 
-final private[infrastructure] class LiveRefreshTokenService[F[_]: {Async, Clock}] private (
+final private[infrastructure] class LiveRefreshTokenService[F[_]: {Monad, Clock, UUIDGen}] private (
   repository: RefreshTokenRepository[F],
   refreshTokenGenerator: RefreshTokenGenerator[F],
   refreshTokenHasher: RefreshTokenHasher[F],

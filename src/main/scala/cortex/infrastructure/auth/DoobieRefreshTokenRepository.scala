@@ -1,6 +1,6 @@
 package cortex.infrastructure.auth
 
-import cats.effect.kernel.Async
+import cats.effect.kernel.MonadCancelThrow
 import cortex.domain.auth.{RefreshTokenHash, RefreshTokenId, RefreshTokenRecord, RefreshTokenRepository}
 import cats.implicits.*
 import doobie.implicits.*
@@ -10,7 +10,8 @@ import doobie.{ConnectionIO, Transactor}
 
 import java.time.Instant
 
-final private[infrastructure] class DoobieRefreshTokenRepository[F[_]: Async] private (xa: Transactor[F]) extends RefreshTokenRepository[F]:
+final private[infrastructure] class DoobieRefreshTokenRepository[F[_]: MonadCancelThrow] private (xa: Transactor[F])
+  extends RefreshTokenRepository[F]:
   override def create(token: RefreshTokenRecord): F[Unit] =
     insert(token).transact(xa).void
 
@@ -62,5 +63,5 @@ final private[infrastructure] class DoobieRefreshTokenRepository[F[_]: Async] pr
           )""".update.run
 
 object DoobieRefreshTokenRepository:
-  def apply[F[_]: Async](xa: Transactor[F]): RefreshTokenRepository[F] =
+  def apply[F[_]: MonadCancelThrow](xa: Transactor[F]): RefreshTokenRepository[F] =
     new DoobieRefreshTokenRepository[F](xa)

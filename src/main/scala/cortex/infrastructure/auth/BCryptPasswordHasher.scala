@@ -1,6 +1,6 @@
 package cortex.infrastructure.auth
 
-import cats.effect.kernel.Async
+import cats.effect.kernel.Sync
 import cats.syntax.all.*
 import tsec.passwordhashers.PasswordHash
 import tsec.passwordhashers.jca.BCrypt
@@ -9,7 +9,7 @@ import cortex.domain.users.HashedPassword
 
 import java.nio.charset.StandardCharsets.UTF_8
 
-final private[infrastructure] class BCryptPasswordHasher[F[_]: Async] extends PasswordHasher[F]:
+final private[infrastructure] class BCryptPasswordHasher[F[_]: Sync] extends PasswordHasher[F]:
 
   override def hash(rawPassword: String): F[HashedPassword] =
     BCrypt
@@ -26,5 +26,5 @@ final private[infrastructure] class BCryptPasswordHasher[F[_]: Async] extends Pa
     )
 
 object BCryptPasswordHasher:
-  def apply[F[_]: Async]: PasswordHasher[F] =
+  def apply[F[_]: Sync]: PasswordHasher[F] =
     new BCryptPasswordHasher[F]

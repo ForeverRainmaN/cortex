@@ -4,13 +4,9 @@ import cats.effect.*
 import doobie.hikari.HikariTransactor
 import doobie.{ExecutionContexts, Transactor}
 import org.testcontainers.containers.PostgreSQLContainer
-import org.typelevel.log4cats.Logger
-import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 trait DoobieSpec:
   private val schemaScript = "db/schema.sql"
-
-  given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
   val postgres: Resource[IO, PostgreSQLContainer[Nothing]] =
     val acquire = IO:

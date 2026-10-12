@@ -1,15 +1,14 @@
 package cortex.infrastructure.users
 
-import cats.effect.kernel.Async
+import cats.effect.kernel.MonadCancelThrow
 import cats.implicits.*
 import cortex.domain.users.{CreateUserError, Email, User, UserId, UserRepository}
 import doobie.{Fragment, Transactor}
 import doobie.implicits.*
 import doobie.postgres.implicits.*
 import cortex.infrastructure.persistence.DoobieMappings.given
-import org.typelevel.log4cats.Logger
 
-final private[infrastructure] class DoobieUserRepository[F[_]: {Async, Logger}] private (xa: Transactor[F])
+final private[infrastructure] class DoobieUserRepository[F[_]: MonadCancelThrow] private (xa: Transactor[F])
   extends UserRepository[F]:
   override def find(id: UserId): F[Option[User]] =
     selectUserBy(fr"user_id = $id")
@@ -44,5 +43,5 @@ final private[infrastructure] class DoobieUserRepository[F[_]: {Async, Logger}] 
       .transact(xa)
 
 object DoobieUserRepository:
-  def apply[F[_]: {Async, Logger}](xa: Transactor[F]): UserRepository[F] =
+  def apply[F[_]: MonadCancelThrow](xa: Transactor[F]): UserRepository[F] =
     new DoobieUserRepository[F](xa)
