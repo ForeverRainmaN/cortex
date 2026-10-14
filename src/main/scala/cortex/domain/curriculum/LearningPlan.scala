@@ -5,6 +5,11 @@ import cats.syntax.all.*
 import cortex.domain.catalog.ResourceId
 import cortex.domain.users.UserId
 
+final case class PlanItem(
+  id: PlanItemId,
+  resourceId: ResourceId
+)
+
 final case class LearningPlan private (
   id: LearningPlanId,
   ownerId: UserId,
@@ -35,7 +40,10 @@ object LearningPlan:
       )
     }
 
-final case class PlanItem(
-  id: PlanItemId,
-  resourceId: ResourceId
-)
+  private[curriculum] def unsafeMake(
+    id: LearningPlanId,
+    ownerId: UserId,
+    title: String,
+    sourcePathId: Option[LearningPathId],
+    items: Vector[PlanItem]
+  ): LearningPlan = new LearningPlan(id, ownerId, title, sourcePathId, items)

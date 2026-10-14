@@ -9,3 +9,4 @@ enum LearningPathError:
   case DuplicateItems(itemIds: Set[PathItemId])
   case DuplicateResources(resourceIds: Set[ResourceId])
   case SectionNotFound(sectionId: SectionId)
+  case InvalidSection(error: PathSectionError)

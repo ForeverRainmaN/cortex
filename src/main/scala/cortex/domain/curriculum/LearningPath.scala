@@ -3,6 +3,8 @@ package cortex.domain.curriculum
 import cats.data.ValidatedNec
 import cats.syntax.all.*
 import cortex.domain.catalog.ResourceId
+import cortex.domain.curriculum.PathSectionError
+import cortex.domain.curriculum.{LearningPathError, LearningPathId, PathItemId, SectionId}
 import cortex.domain.users.UserId
 
 final case class PathItem(
@@ -10,11 +12,35 @@ final case class PathItem(
   resourceId: ResourceId
 )
 
-final case class PathSection(
+final case class PathSection private (
   id: SectionId,
   title: String,
   items: Vector[PathItem]
-)
+):
+  def addItem(item: PathItem): Either[PathSectionError, PathSection] =
+    PathSection
+      .make(id, title, items :+ item)
+      .toEither
+      .leftMap(_.head)
+
+object PathSection:
+  def make(
+    id: SectionId,
+    title: String,
+    items: Vector[PathItem]
+  ): ValidatedNec[PathSectionError, PathSection] =
+    (
+      CurriculumValidation.unique(items.map(_.id), PathSectionError.DuplicatePathItems(_)),
+      CurriculumValidation.nonEmpty(title, PathSectionError.EmptyTitle)
+    ).mapN { (_, normalizedTitle) =>
+      new PathSection(id, normalizedTitle, items)
+    }
+
+  private[curriculum] def unsafeMake(
+    id: SectionId,
+    title: String,
+    items: Vector[PathItem]
+  ): PathSection = new PathSection(id, title, items)
 
 final case class LearningPath private (
   id: LearningPathId,
@@ -28,10 +54,12 @@ final case class LearningPath private (
 
   def addItem(sectionId: SectionId, item: PathItem): Either[LearningPathError, LearningPath] =
     sections.indexWhere(_.id == sectionId) match
-      case -1    => Left(LearningPathError.SectionNotFound(sectionId))
+      case -1    =>
+        Left(LearningPathError.SectionNotFound(sectionId))
       case index =>
-        val section = sections(index)
-        rebuild(sections.updated(index, section.copy(items = section.items :+ item)))
+        val current        = sections(index)
+        val updatedSection = PathSection.unsafeMake(current.id, current.title, current.items :+ item)
+        rebuild(sections.updated(index, updatedSection))
 
   private def rebuild(updatedSections: Vector[PathSection]): Either[LearningPathError, LearningPath] =
     LearningPath
@@ -50,9 +78,17 @@ object LearningPath:
     (
       validateTitle(title),
       validateSections(sections)
-    ).mapN { (normalizedTitle, normalizedSections) =>
-      new LearningPath(id, authorId, normalizedTitle, description, normalizedSections)
+    ).mapN { (normalizedTitle, validatedSections) =>
+      new LearningPath(id, authorId, normalizedTitle, description, validatedSections)
     }
+
+  private[curriculum] def unsafeMake(
+    id: LearningPathId,
+    authorId: UserId,
+    title: String,
+    description: Option[String],
+    sections: Vector[PathSection]
+  ): LearningPath = new LearningPath(id, authorId, title, description, sections)
 
   private def validateTitle(title: String): ValidatedNec[LearningPathError, String] =
     CurriculumValidation.nonEmpty(title, LearningPathError.EmptyTitle)
@@ -60,18 +96,19 @@ object LearningPath:
   private def validateSections(
     sections: Vector[PathSection]
   ): ValidatedNec[LearningPathError, Vector[PathSection]] =
-    val normalizedSections = sections.map(section => section.copy(title = section.title.trim))
-
     (
-      validateSectionTitles(normalizedSections),
-      CurriculumValidation.unique(normalizedSections.map(_.id), LearningPathError.DuplicateSections(_)),
-      CurriculumValidation.unique(normalizedSections.flatMap(_.items.map(_.id)), LearningPathError.DuplicateItems(_)),
+      validateSectionTitles(sections),
+      CurriculumValidation.unique(sections.map(_.id), LearningPathError.DuplicateSections(_)),
       CurriculumValidation.unique(
-        normalizedSections.flatMap(_.items.map(_.resourceId)),
+        sections.flatMap(_.items.map(_.id)),
+        LearningPathError.DuplicateItems(_)
+      ),
+      CurriculumValidation.unique(
+        sections.flatMap(_.items.map(_.resourceId)),
         LearningPathError.DuplicateResources(_)
       )
     ).mapN { (_, _, _, _) =>
-      normalizedSections
+      sections
     }
 
   private def validateSectionTitles(

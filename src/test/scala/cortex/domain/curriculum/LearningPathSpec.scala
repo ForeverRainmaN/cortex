@@ -7,6 +7,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 class LearningPathSpec extends AnyFlatSpec, Matchers, LearningPathFixture:
+
   it should "create a learning path with valid data" in:
     val result = LearningPath.make(pathId, authorId, pathTitle, pathDescription, Vector(basicsSection))
 
@@ -15,7 +16,7 @@ class LearningPathSpec extends AnyFlatSpec, Matchers, LearningPathFixture:
     )
 
   it should "normalize path and section titles" in:
-    val section = basicsSection.copy(title = s"  $basicsSectionTitle  ")
+    val section = validSection(basicsSectionId, s"  $basicsSectionTitle  ", Vector(scalaBasicsItem))
     val result  = LearningPath.make(pathId, authorId, s"  $pathTitle  ", pathDescription, Vector(section))
 
     result.map(path => (path.title, path.sections.map(_.title))) shouldBe Valid(
@@ -28,7 +29,7 @@ class LearningPathSpec extends AnyFlatSpec, Matchers, LearningPathFixture:
     result shouldBe Invalid(NonEmptyChain.one(LearningPathError.EmptyTitle))
 
   it should "reject an empty section title" in:
-    val section = basicsSection.copy(title = "   ")
+    val section = unsafeSection(basicsSectionId, "   ", Vector(scalaBasicsItem))
     val result  = LearningPath.make(pathId, authorId, pathTitle, pathDescription, Vector(section))
 
     result shouldBe Invalid(NonEmptyChain.one(LearningPathError.EmptySectionTitle(Set(basicsSectionId))))
@@ -46,14 +47,18 @@ class LearningPathSpec extends AnyFlatSpec, Matchers, LearningPathFixture:
     )
 
   it should "reject duplicate resources across sections" in:
-    val duplicate = catsSection.copy(items = Vector(PathItem(scalaWithCatsItemId, scalaBasicsResourceId)))
+    val duplicate = validSection(
+      catsSectionId,
+      catsSectionTitle,
+      Vector(PathItem(scalaWithCatsItemId, scalaBasicsResourceId))
+    )
     val result    =
       LearningPath.make(pathId, authorId, pathTitle, pathDescription, Vector(basicsSection, duplicate))
 
     result shouldBe Invalid(NonEmptyChain.one(LearningPathError.DuplicateResources(Set(scalaBasicsResourceId))))
 
   it should "accumulate independent errors" in:
-    val section = basicsSection.copy(title = "   ")
+    val section = unsafeSection(basicsSectionId, "   ", Vector(scalaBasicsItem))
     val result  = LearningPath.make(pathId, authorId, "   ", pathDescription, Vector(section))
 
     result.leftMap(_.toList) shouldBe Invalid(
@@ -67,14 +72,20 @@ class LearningPathSpec extends AnyFlatSpec, Matchers, LearningPathFixture:
     learningPath.addSection(catsSection).map(_.sections) shouldBe Right(Vector(basicsSection, catsSection))
 
   it should "reject adding a section with an existing id" in:
-    val section = catsSection.copy(id = basicsSectionId, items = Vector(scalaWithCatsItem))
+    val conflicting = validSection(basicsSectionId, catsSectionTitle, Vector(scalaWithCatsItem))
 
-    learningPath.addSection(section) shouldBe Left(LearningPathError.DuplicateSections(Set(basicsSectionId)))
+    learningPath.addSection(conflicting) shouldBe Left(
+      LearningPathError.DuplicateSections(Set(basicsSectionId))
+    )
 
   it should "reject adding a section with an already used resource" in:
-    val section = catsSection.copy(items = Vector(PathItem(scalaWithCatsItemId, scalaBasicsResourceId)))
+    val conflicting = validSection(
+      catsSectionId,
+      catsSectionTitle,
+      Vector(PathItem(scalaWithCatsItemId, scalaBasicsResourceId))
+    )
 
-    learningPath.addSection(section) shouldBe Left(
+    learningPath.addSection(conflicting) shouldBe Left(
       LearningPathError.DuplicateResources(Set(scalaBasicsResourceId))
     )
 
