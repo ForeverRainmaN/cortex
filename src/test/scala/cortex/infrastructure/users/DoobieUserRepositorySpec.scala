@@ -14,19 +14,17 @@ import org.scalatest.matchers.should.Matchers
 
 class DoobieUserRepositorySpec extends AsyncFlatSpec, AsyncIOSpec, DoobieSpec, Matchers, DoobieUserRepositoryFixture:
   it should "create new user" in:
-    transactor.use: xa =>
-      val program =
-        for
-          users      = DoobieUserRepository[IO](xa)
-          created   <- users.create(user)
-          maybeUser <- sql"SELECT * FROM users WHERE user_id = ${user.id}"
-                         .query[User]
-                         .option
-                         .transact(xa)
-        yield (created, maybeUser)
-      program.map: (created, savedUser) =>
-        created shouldBe Right(user)
-        savedUser shouldBe Some(user)
+    val xa    = transactor
+    val users = DoobieUserRepository[IO](xa)
+    for
+      created   <- users.create(user)
+      maybeUser <- sql"SELECT * FROM users WHERE user_id = ${user.id}"
+                     .query[User]
+                     .option
+                     .transact(xa)
+    yield
+      created shouldBe Right(user)
+      maybeUser shouldBe Some(user)
 
   it should "return EmailAlreadyExists without inserting a user if email already exists" in:
     withRepository(DoobieUserRepository[IO](_)): users =>
