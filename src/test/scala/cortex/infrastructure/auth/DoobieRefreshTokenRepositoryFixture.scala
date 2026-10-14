@@ -85,12 +85,12 @@ trait DoobieRefreshTokenRepositoryFixture:
   protected def withRefreshTokenRepository[A](
     test: (RefreshTokenRepository[IO], Transactor[IO]) => IO[A]
   ): IO[A] =
-    val xa = transactor
-    for
-      _          <- insertUser(xa)
-      repository  = DoobieRefreshTokenRepository[IO](xa)
-      result     <- test(repository, xa)
-    yield result
+    withTransactor: xa =>
+      for
+        _          <- insertUser(xa)
+        repository  = DoobieRefreshTokenRepository[IO](xa)
+        result     <- test(repository, xa)
+      yield result
 
   protected def withToken[A](record: RefreshTokenRecord)(
     test: (RefreshTokenRepository[IO], Transactor[IO]) => IO[A]

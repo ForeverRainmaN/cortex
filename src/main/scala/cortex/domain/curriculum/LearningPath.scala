@@ -65,8 +65,14 @@ object LearningPath:
 
     (
       validateSectionTitles(normalizedSections),
-      validateUnique(normalizedSections.map(_.id), LearningPathError.DuplicateSections(_)),
-      validateUnique(normalizedSections.flatMap(_.items.map(_.id)), LearningPathError.DuplicateItems(_)),
+      validateUnique(
+        normalizedSections.map(_.id),
+        LearningPathError.DuplicateSections(_)
+      ),
+      validateUnique(
+        normalizedSections.flatMap(_.items.map(_.id)),
+        LearningPathError.DuplicateItems(_)
+      ),
       validateUnique(
         normalizedSections.flatMap(_.items.map(_.resourceId)),
         LearningPathError.DuplicateResources(_)

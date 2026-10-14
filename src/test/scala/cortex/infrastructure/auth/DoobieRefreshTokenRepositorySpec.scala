@@ -224,6 +224,9 @@ class DoobieRefreshTokenRepositorySpec
         firstFromDb  <- readRefreshTokenRecord(firstReplacement.id).transact(xa)
         secondFromDb <- readRefreshTokenRecord(secondReplacement.id).transact(xa)
       yield
-        results.count(identity) shouldBe 1
-        oldRecord shouldBe Some(refreshTokenRecord.copy(revokedAt = Some(referenceTime)))
-        List(firstFromDb, secondFromDb).flatten.size shouldBe 1
+        withClue(s"results=$results, oldRecord=$oldRecord, firstFromDb=$firstFromDb, secondFromDb=$secondFromDb") {
+          // Cats folds Tuple2 over its second element only; count both rotation results explicitly.
+          List(results._1, results._2).count(identity) shouldBe 1
+          oldRecord shouldBe Some(refreshTokenRecord.copy(revokedAt = Some(referenceTime)))
+          List(firstFromDb, secondFromDb).flatten.size shouldBe 1
+        }

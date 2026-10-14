@@ -5,11 +5,11 @@ import cats.effect.unsafe.implicits.global
 import doobie.hikari.HikariTransactor
 import doobie.implicits.*
 import doobie.{ExecutionContexts, Transactor}
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
+import org.scalatest.{BeforeAndAfterAll, Suite}
 import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.PostgreSQLContainer
 
-trait DoobieSpec extends BeforeAndAfterAll, BeforeAndAfterEach:
+trait DoobieSpec extends BeforeAndAfterAll:
   self: Suite =>
 
   private val postgresImage = "postgres:16-alpine"
@@ -20,9 +20,6 @@ trait DoobieSpec extends BeforeAndAfterAll, BeforeAndAfterEach:
     scala.util.Try(DockerClientFactory.instance().isDockerAvailable).getOrElse(false)
 
   private var session: Option[(Transactor[IO], IO[Unit])] = None
-
-  protected def transactor: Transactor[IO] =
-    session.map(_._1).getOrElse(cancel("Docker is not available"))
 
   override protected def beforeAll(): Unit =
     super.beforeAll()
@@ -35,12 +32,12 @@ trait DoobieSpec extends BeforeAndAfterAll, BeforeAndAfterEach:
     session = None
     super.afterAll()
 
-  override protected def beforeEach(): Unit =
-    super.beforeEach()
-    session.foreach((xa, _) => truncateAll(xa).unsafeRunSync())
-
   protected def withRepository[R, A](makeRepository: Transactor[IO] => R)(test: R => IO[A]): IO[A] =
-    test(makeRepository(transactor))
+    withTransactor(xa => test(makeRepository(xa)))
+
+  protected def withTransactor[A](test: Transactor[IO] => IO[A]): IO[A] =
+    val xa = session.map(_._1).getOrElse(cancel("Docker is not available"))
+    truncateAll(xa) *> test(xa)
 
   private def truncateAll(xa: Transactor[IO]): IO[Unit] =
     doobie.Fragment
