@@ -4,7 +4,7 @@ import cortex.domain.learning.*
 
 import java.util.UUID
 
-trait DomainSpec:
+trait LearningFixture:
   protected val contentId: ContentId = ContentId("id-1")
   protected val firstNote: Note = Note(
     NoteId(UUID.fromString("00000000-0000-0000-0000-000000000001")),

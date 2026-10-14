@@ -4,7 +4,7 @@ import cortex.domain.learning.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class EvolveSpec extends AnyFlatSpec, Matchers, DomainSpec:
+class EvolveSpec extends AnyFlatSpec, Matchers, LearningFixture:
 
   it should "create new ContentState" in:
     val event = LearningEvent.ContentQueued(contentId, ContentKind.Book)

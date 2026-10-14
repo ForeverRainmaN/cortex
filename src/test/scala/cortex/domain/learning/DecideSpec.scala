@@ -6,7 +6,7 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration.DurationInt
 
-class DecideSpec extends AnyFlatSpec, Matchers, DomainSpec:
+class DecideSpec extends AnyFlatSpec, Matchers, LearningFixture:
   it should "enqueue new content" in:
     decide(contentId, emptyState, Command.Enqueue(ContentKind.Book)) shouldBe Right(
       LearningEvent.ContentQueued(contentId, ContentKind.Book)
