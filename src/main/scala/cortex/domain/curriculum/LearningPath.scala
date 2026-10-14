@@ -50,13 +50,12 @@ object LearningPath:
     (
       validateTitle(title),
       validateSections(sections)
-    ).mapN: (normalizedTitle, normalizedSections) =>
+    ).mapN { (normalizedTitle, normalizedSections) =>
       new LearningPath(id, authorId, normalizedTitle, description, normalizedSections)
+    }
 
   private def validateTitle(title: String): ValidatedNec[LearningPathError, String] =
-    val normalized = title.trim
-    if normalized.nonEmpty then normalized.validNec
-    else LearningPathError.EmptyTitle.invalidNec
+    CurriculumValidation.nonEmpty(title, LearningPathError.EmptyTitle)
 
   private def validateSections(
     sections: Vector[PathSection]
@@ -65,31 +64,22 @@ object LearningPath:
 
     (
       validateSectionTitles(normalizedSections),
-      validateUnique(
-        normalizedSections.map(_.id),
-        LearningPathError.DuplicateSections(_)
-      ),
-      validateUnique(
-        normalizedSections.flatMap(_.items.map(_.id)),
-        LearningPathError.DuplicateItems(_)
-      ),
-      validateUnique(
+      CurriculumValidation.unique(normalizedSections.map(_.id), LearningPathError.DuplicateSections(_)),
+      CurriculumValidation.unique(normalizedSections.flatMap(_.items.map(_.id)), LearningPathError.DuplicateItems(_)),
+      CurriculumValidation.unique(
         normalizedSections.flatMap(_.items.map(_.resourceId)),
         LearningPathError.DuplicateResources(_)
       )
-    ).mapN((_, _, _, _) => normalizedSections)
+    ).mapN { (_, _, _, _) =>
+      normalizedSections
+    }
 
   private def validateSectionTitles(
     sections: Vector[PathSection]
   ): ValidatedNec[LearningPathError, Unit] =
-    val empty = sections.filter(_.title.isEmpty).map(_.id)
-    if empty.isEmpty then ().validNec
-    else LearningPathError.EmptySectionTitle(empty.toSet).invalidNec
-
-  private def validateUnique[A](
-    values: Vector[A],
-    error: Set[A] => LearningPathError
-  ): ValidatedNec[LearningPathError, Unit] =
-    val duplicates = values.groupBy(identity).collect { case (value, xs) if xs.size > 1 => value }.toSet
-    if duplicates.isEmpty then ().validNec
-    else error(duplicates).invalidNec
+    CurriculumValidation.nonEmptyKeys(
+      sections,
+      _.title,
+      _.id,
+      LearningPathError.EmptySectionTitle(_)
+    )

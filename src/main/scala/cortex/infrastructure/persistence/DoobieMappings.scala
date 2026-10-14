@@ -6,5 +6,5 @@ import doobie.postgres.implicits.UuidType
 
 import java.util.UUID
 
-object DoobieMappings:
+private[infrastructure] object DoobieMappings:
   given Meta[UserId] = Meta[UUID].timap(UserId(_))(_.value)
