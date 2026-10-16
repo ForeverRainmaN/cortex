@@ -17,6 +17,8 @@ lazy val root = rootProject
     name := "cortex",
     Test / fork := true,
     Test / envVars ++= colimaDockerEnv,
+    Compile / scalacOptions += "-language:postfixOps",
+    Test / scalacOptions += "-language:postfixOps",
     Test / parallelExecution := false,
     libraryDependencies ++= Seq(
       "org.typelevel"         %% "cats-effect"                   % "3.7.1",

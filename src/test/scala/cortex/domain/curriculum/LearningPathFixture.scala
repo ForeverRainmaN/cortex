@@ -81,5 +81,5 @@ trait LearningPathFixture:
   ): LearningPath =
     LearningPath.unsafeMake(id, authorId, title, description, sections)
 
-  private def uuid(index: Int): UUID =
+  protected def uuid(index: Int): UUID =
     UUID.fromString(f"00000000-0000-0000-0000-$index%012d")
