@@ -1,5 +1,5 @@
 package cortex.domain.learning
 
 trait EventStore[F[_]]:
-  def append(event: LearningEvent): F[Unit]
-  def loadById(id: ContentId): F[List[LearningEvent]]
+  def loadById(id: ContentId): F[EventHistory]
+  def append(event: LearningEvent, expectedVersion: EventVersion): F[Either[AppendError, Unit]]
