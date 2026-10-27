@@ -5,7 +5,6 @@ import cats.effect.Clock
 import cats.effect.std.UUIDGen
 import cortex.api.auth.AuthDTO.*
 import cortex.api.syntax.Routes
-import cortex.api.SimpleRoute
 import cortex.application.auth.{loginUser, registerUser, LoginError, PasswordHasher, RegisterError}
 import cortex.domain.auth.{AccessTokenService, RefreshTokenService, TokenPair}
 import cortex.domain.users.{User, UserRepository}
@@ -28,7 +27,7 @@ final class AuthRoutes[F[_]: {Monad, Clock, UUIDGen}](
 ):
   val r: Routes[F] = registerR ~> loginUserR
 
-  private lazy val registerR: SimpleRoute[F] =
+  private lazy val registerR: Route[F] =
     val ep = endpoint.post
       .in("api" / "auth" / "register")
       .in(jsonBody[Credentials])
@@ -46,7 +45,7 @@ final class AuthRoutes[F[_]: {Monad, Clock, UUIDGen}](
       }
     }
 
-  private lazy val loginUserR: SimpleRoute[F] =
+  private lazy val loginUserR: Route[F] =
     val ep = endpoint.post
       .in("api" / "auth" / "login")
       .in(jsonBody[Credentials])
