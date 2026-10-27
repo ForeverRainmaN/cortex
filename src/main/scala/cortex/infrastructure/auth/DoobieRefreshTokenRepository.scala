@@ -6,6 +6,7 @@ import cats.implicits.*
 import doobie.implicits.*
 import doobie.postgres.implicits.*
 import cortex.infrastructure.persistence.DoobieMappings.given
+import cortex.infrastructure.auth.DoobieAuthMappings.given
 import doobie.{ConnectionIO, Transactor}
 
 import java.time.Instant

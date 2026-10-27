@@ -7,6 +7,7 @@ import doobie.{Fragment, Transactor}
 import doobie.implicits.*
 import doobie.postgres.implicits.*
 import cortex.infrastructure.persistence.DoobieMappings.given
+import cortex.infrastructure.users.DoobieUserMappings.given
 
 final private[infrastructure] class DoobieUserRepository[F[_]: MonadCancelThrow] private (xa: Transactor[F])
   extends UserRepository[F]:
