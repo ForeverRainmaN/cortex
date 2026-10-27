@@ -6,22 +6,41 @@ import scala.util.Try
 opaque type ContentId = String
 
 object ContentId:
-  def apply(s: String): ContentId = s
+  private def apply(s: String): ContentId = s
+  
+  def fromString(s: String): Either[String, ContentId] =
+    if s.nonEmpty then Right(apply(s))
+    else Left("ContentId cannot be empty")
+  
+  def fromStringUnsafe(s: String): ContentId = apply(s)
 
 opaque type NoteId = UUID
 
 object NoteId:
-  def apply(u: UUID): NoteId                           = u
+  private def apply(u: UUID): NoteId = u
+  
+  def fromUUID(u: UUID): NoteId = apply(u)
+  
   def fromString(s: String): Either[Throwable, NoteId] =
-    Try(UUID.fromString(s)).toEither
+    Try(UUID.fromString(s)).toEither.map(apply)
 
 final case class Note(id: NoteId, text: String)
 
 opaque type Percentage = Double
 
 object Percentage:
-  def apply(value: Double): Percentage =
-    if value < 0.0 then 0.0 else if value > 1.0 then 1.0 else value
+  private def apply(value: Double): Percentage = value
+  
+  def fromDouble(value: Double): Either[String, Percentage] =
+    if value < 0.0 then Left("Percentage cannot be negative")
+    else if value > 1.0 then Left("Percentage cannot be greater than 1.0")
+    else Right(apply(value))
+  
+  def unsafeFromDouble(value: Double): Percentage =
+    if value < 0.0 then apply(0.0) 
+    else if value > 1.0 then apply(1.0) 
+    else apply(value)
+  
   extension (p: Percentage)
     def toDouble: Double = p
     def format: String   = f"${p * 100}%.2f%%"

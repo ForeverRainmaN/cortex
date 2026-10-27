@@ -4,9 +4,9 @@ import cats.syntax.all.*
 import org.scalatest.Assertions.fail
 
 trait LearningPlanFixture extends LearningPathFixture:
-  protected val learningPlanId: LearningPlanId = LearningPlanId(uuid(40))
-  protected val firstPlanItemId: PlanItemId = PlanItemId(uuid(41))
-  protected val secondPlanItemId: PlanItemId = PlanItemId(uuid(42))
+  protected val learningPlanId: LearningPlanId = LearningPlanId.fromUUID(uuid(40))
+  protected val firstPlanItemId: PlanItemId = PlanItemId.fromUUID(uuid(41))
+  protected val secondPlanItemId: PlanItemId = PlanItemId.fromUUID(uuid(42))
 
   protected val firstPlanItem: PlanItem = PlanItem(firstPlanItemId, scalaBasicsResourceId)
   protected val secondPlanItem: PlanItem = PlanItem(secondPlanItemId, patternMatchingResourceId)

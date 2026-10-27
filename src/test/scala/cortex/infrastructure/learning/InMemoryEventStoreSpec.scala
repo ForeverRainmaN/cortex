@@ -7,8 +7,8 @@ import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 class InMemoryEventStoreSpec extends AsyncFlatSpec, AsyncIOSpec, Matchers:
-  private val contentId  = ContentId("id-1")
-  private val otherContentId = ContentId("id-2")
+  private val contentId  = ContentId.fromStringUnsafe("id-1")
+  private val otherContentId = ContentId.fromStringUnsafe("id-2")
 
   it should "append new event" in:
     for

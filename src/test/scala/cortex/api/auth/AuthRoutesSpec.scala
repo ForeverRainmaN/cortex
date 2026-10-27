@@ -14,6 +14,7 @@ import org.scalatest.matchers.should.Matchers
 import sttp.tapir.server.http4s.Http4sServerInterpreter
 
 class AuthRoutesSpec extends AsyncFlatSpec, AsyncIOSpec, Matchers, AuthFixture:
+
   private def payload(
     requestedEmail: String = email.value,
     requestedPassword: String = password
@@ -24,7 +25,7 @@ class AuthRoutesSpec extends AsyncFlatSpec, AsyncIOSpec, Matchers, AuthFixture:
     )
 
   private def register(repository: UserRepository[IO], body: Json): IO[Response[IO]] =
-    val endpoints = new AuthRoutes[IO](repository, passwordHasher).r
+    val endpoints = new AuthRoutes[IO](repository, passwordHasher, stubAccessTokenService, stubRefreshTokenService).r
     val app       = Http4sServerInterpreter[IO]().toRoutes(endpoints.toList).orNotFound
     app.run(Request[IO](Method.POST, uri"/api/auth/register").withEntity(body))
 

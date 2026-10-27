@@ -18,18 +18,24 @@ object User:
 
 opaque type UserId = UUID
 object UserId:
-  def apply(id: UUID): UserId                          = id
+  private def apply(id: UUID): UserId = id
+  
+  def fromUUID(id: UUID): UserId = apply(id)
+  
   def fromString(s: String): Either[Throwable, UserId] =
-    Try(UUID.fromString(s)).toEither
+    Try(UUID.fromString(s)).toEither.map(apply)
 
   extension (userId: UserId) def value: UUID = userId
 
 opaque type Email = String
 object Email:
-  def apply(s: String): Email                      = s
+  private def apply(s: String): Email = s
+  
   def fromString(v: String): Either[String, Email] =
-    if v.contains("@") && v.contains(".") then Right(v)
+    if v.contains("@") && v.contains(".") then Right(apply(v))
     else Left(s"Invalid email address: $v")
+  
+  def fromStringUnsafe(v: String): Email = apply(v)
 
   extension (e: Email)
     def value: String  = e
@@ -38,6 +44,8 @@ object Email:
 opaque type HashedPassword = String
 
 object HashedPassword:
-  def apply(v: String): HashedPassword = v
+  private def apply(v: String): HashedPassword = v
+  
+  def fromHash(v: String): HashedPassword = apply(v)
 
   extension (p: HashedPassword) def value: String = p

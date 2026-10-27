@@ -22,19 +22,19 @@ trait LiveRefreshTokenServiceFixture:
   protected val referenceTime: Instant = Instant.parse("2026-10-07T12:00:00Z")
   protected val ttl: FiniteDuration    = 30.days
 
-  protected val userId: UserId = UserId(
+  protected val userId: UserId = UserId.fromUUID(
     UUID.fromString("00000000-0000-0000-0000-000000000001")
   )
 
-  protected val refreshTokenId: RefreshTokenId = RefreshTokenId(
+  protected val refreshTokenId: RefreshTokenId = RefreshTokenId.fromUUID(
     UUID.fromString("00000000-0000-0000-0000-000000000002")
   )
 
   protected def generatedToken(n: Int): RefreshToken =
-    RefreshToken(s"token-$n")
+    RefreshToken.fromString(s"token-$n")
 
   protected def hashOf(token: RefreshToken): RefreshTokenHash =
-    RefreshTokenHash(s"hash:${token.value}")
+    RefreshTokenHash.fromHash(s"hash:${token.value}")
 
   protected def expiresAtFor(issuedAt: Instant): Instant =
     issuedAt.plusMillis(ttl.toMillis)

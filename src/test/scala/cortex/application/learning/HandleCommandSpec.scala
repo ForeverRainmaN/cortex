@@ -9,7 +9,7 @@ import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 class HandleCommandSpec extends AsyncFlatSpec, AsyncIOSpec, Matchers:
-  private val contentId = ContentId("id-1")
+  private val contentId = ContentId.fromStringUnsafe("id-1")
 
   it should "handle enqueue command" in:
     for
@@ -19,7 +19,7 @@ class HandleCommandSpec extends AsyncFlatSpec, AsyncIOSpec, Matchers:
     yield events shouldBe List(LearningEvent.ContentQueued(contentId, ContentKind.Book))
 
   it should "append enqueue event only to the stream of the given id" in:
-    val otherContentId = ContentId("id-2")
+    val otherContentId = ContentId.fromStringUnsafe("id-2")
     for
       store       <- InMemoryEventStore.make[IO]
       _           <- handleCommand(store)(otherContentId, Command.Enqueue(ContentKind.Video))

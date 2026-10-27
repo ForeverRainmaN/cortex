@@ -18,7 +18,7 @@ final private[infrastructure] class LiveRefreshTokenHasher[F[_]: Sync] private e
       val encoded =
         Base64.getUrlEncoder.withoutPadding().encodeToString(bytes)
 
-      RefreshTokenHash(encoded)
+      RefreshTokenHash.fromHash(encoded)
 
 object LiveRefreshTokenHasher:
   def apply[F[_]: Sync]: RefreshTokenHasher[F] =

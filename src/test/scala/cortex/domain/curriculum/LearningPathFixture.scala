@@ -8,19 +8,19 @@ import org.scalatest.Assertions.fail
 import java.util.UUID
 
 trait LearningPathFixture:
-  protected val pathId: LearningPathId = LearningPathId(uuid(1))
-  protected val authorId: UserId       = UserId(uuid(2))
+  protected val pathId: LearningPathId = LearningPathId.fromUUID(uuid(1))
+  protected val authorId: UserId       = UserId.fromUUID(uuid(2))
 
-  protected val basicsSectionId: SectionId = SectionId(uuid(10))
-  protected val catsSectionId: SectionId   = SectionId(uuid(11))
+  protected val basicsSectionId: SectionId = SectionId.fromUUID(uuid(10))
+  protected val catsSectionId: SectionId   = SectionId.fromUUID(uuid(11))
 
-  protected val scalaBasicsItemId: PathItemId     = PathItemId(uuid(20))
-  protected val patternMatchingItemId: PathItemId = PathItemId(uuid(21))
-  protected val scalaWithCatsItemId: PathItemId   = PathItemId(uuid(22))
+  protected val scalaBasicsItemId: PathItemId     = PathItemId.fromUUID(uuid(20))
+  protected val patternMatchingItemId: PathItemId = PathItemId.fromUUID(uuid(21))
+  protected val scalaWithCatsItemId: PathItemId   = PathItemId.fromUUID(uuid(22))
 
-  protected val scalaBasicsResourceId: ResourceId     = ResourceId(uuid(30))
-  protected val patternMatchingResourceId: ResourceId = ResourceId(uuid(31))
-  protected val scalaWithCatsResourceId: ResourceId   = ResourceId(uuid(32))
+  protected val scalaBasicsResourceId: ResourceId     = ResourceId.fromUUID(uuid(30))
+  protected val patternMatchingResourceId: ResourceId = ResourceId.fromUUID(uuid(31))
+  protected val scalaWithCatsResourceId: ResourceId   = ResourceId.fromUUID(uuid(32))
 
   protected val pathTitle          = "Scala"
   protected val pathDescription    = Some("Learning path for Scala developers")

@@ -21,7 +21,7 @@ def registerUser[F[_]: {Monad, Clock, UUIDGen}](
     _          <- EitherT.condF[F, RegisterError](existing.isEmpty, RegisterError.EmailAlreadyExists(validEmail))
     hash       <- EitherT.liftF(passwordHasher.hash(rawPassword))
     timestamp  <- EitherT.liftF(Clock[F].realTimeInstant)
-    id         <- EitherT.liftF(UUIDGen.randomUUID[F].map(UserId(_)))
+    id         <- EitherT.liftF(UUIDGen.randomUUID[F].map(UserId.fromUUID))
     user       <- EitherT(userRepository.create(User.make(id, validEmail, hash, timestamp))).leftMap {
                     case CreateUserError.EmailAlreadyExists(email) => RegisterError.EmailAlreadyExists(email)
                   }

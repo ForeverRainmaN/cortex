@@ -95,7 +95,7 @@ class LiveRefreshTokenServiceSpec extends AsyncFlatSpec, AsyncIOSpec, Matchers, 
   it should "return InvalidOrExpired for an unknown token and store nothing" in:
     withService: fixture =>
       for
-        result  <- fixture.service.rotate(RefreshToken("unknown"))
+        result  <- fixture.service.rotate(RefreshToken.fromString("unknown"))
         records <- fixture.repository.all
       yield
         result shouldBe Left(RefreshTokenError.InvalidOrExpired)
@@ -134,7 +134,7 @@ class LiveRefreshTokenServiceSpec extends AsyncFlatSpec, AsyncIOSpec, Matchers, 
       yield result shouldBe Left(RefreshTokenError.InvalidOrExpired)
 
   it should "return InvalidOrExpired when the repository rejects the rotation (lost race)" in:
-    val token      = RefreshToken("raced")
+    val token      = RefreshToken.fromString("raced")
     val repository = new StubRepository:
       override def findActiveByHash(tokenHash: RefreshTokenHash, now: Instant): IO[Option[RefreshTokenRecord]] =
         IO.pure(Some(activeRecord(token)))
@@ -145,7 +145,7 @@ class LiveRefreshTokenServiceSpec extends AsyncFlatSpec, AsyncIOSpec, Matchers, 
       service.rotate(token).map(_ shouldBe Left(RefreshTokenError.InvalidOrExpired))
 
   it should "pass the old hash and the current time to the repository on rotation" in:
-    val token = RefreshToken("old")
+    val token = RefreshToken.fromString("old")
     for
       calls      <- Ref.of[IO, List[(RefreshTokenHash, RefreshTokenRecord, Instant)]](Nil)
       repository  = new StubRepository:
@@ -177,7 +177,7 @@ class LiveRefreshTokenServiceSpec extends AsyncFlatSpec, AsyncIOSpec, Matchers, 
         IO.raiseError(failure)
 
     withStubService(repository): service =>
-      service.rotate(RefreshToken("any")).attempt.map(_ shouldBe Left(failure))
+      service.rotate(RefreshToken.fromString("any")).attempt.map(_ shouldBe Left(failure))
 
   it should "revoke an active token at the current time" in:
     withService: fixture =>
@@ -207,7 +207,7 @@ class LiveRefreshTokenServiceSpec extends AsyncFlatSpec, AsyncIOSpec, Matchers, 
         IO.pure(None)
 
     withStubService(repository): service =>
-      service.revoke(RefreshToken("unknown")).map(_ shouldBe false)
+      service.revoke(RefreshToken.fromString("unknown")).map(_ shouldBe false)
 
   it should "return false for an expired token" in:
     withService: fixture =>

@@ -5,6 +5,7 @@ import cats.effect.std.UUIDGen
 import cats.effect.testing.scalatest.AsyncIOSpec
 import cortex.domain.users.{CreateUserError, Email, User, UserId}
 import cortex.infrastructure.persistence.DoobieMappings.given
+import cortex.infrastructure.users.DoobieUserMappings.given
 import cortex.infrastructure.persistence.DoobieSpec
 import doobie.implicits.*
 import doobie.postgres.implicits.*
@@ -30,7 +31,7 @@ class DoobieUserRepositorySpec extends AsyncFlatSpec, AsyncIOSpec, DoobieSpec, M
     withRepository(DoobieUserRepository[IO](_)): users =>
       for
         _              <- users.create(user)
-        duplicateId    <- UUIDGen.randomUUID[IO].map(UserId(_))
+        duplicateId    <- UUIDGen.randomUUID[IO].map(UserId.fromUUID(_))
         duplicate       = user.copy(id = duplicateId)
         result         <- users.create(duplicate)
         maybeDuplicate <- users.find(duplicateId)
@@ -42,7 +43,7 @@ class DoobieUserRepositorySpec extends AsyncFlatSpec, AsyncIOSpec, DoobieSpec, M
     withRepository(DoobieUserRepository[IO](_)): users =>
       for
         _      <- users.create(user)
-        result <- users.create(user.copy(email = Email("another@example.com"))).attempt
+        result <- users.create(user.copy(email = Email.fromStringUnsafe("another@example.com"))).attempt
       yield result match
         case Left(e: PSQLException) => e.getSQLState shouldBe "23505"
         case _                      => fail("Expected duplicate user id error")
@@ -64,7 +65,7 @@ class DoobieUserRepositorySpec extends AsyncFlatSpec, AsyncIOSpec, DoobieSpec, M
       for
         _       <- users.create(user)
         found   <- users.findByEmail(user.email)
-        missing <- users.findByEmail(Email("missing@example.com"))
+        missing <- users.findByEmail(Email.fromStringUnsafe("missing@example.com"))
       yield
         found shouldBe Some(user)
         missing shouldBe None

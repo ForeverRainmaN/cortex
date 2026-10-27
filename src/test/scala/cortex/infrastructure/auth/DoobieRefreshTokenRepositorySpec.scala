@@ -6,6 +6,8 @@ import cats.effect.testing.scalatest.AsyncIOSpec
 import cats.implicits.*
 import cortex.domain.auth.{RefreshTokenHash, RefreshTokenId}
 import cortex.infrastructure.persistence.DoobieSpec
+import cortex.infrastructure.persistence.DoobieMappings.given
+import cortex.infrastructure.auth.DoobieAuthMappings.given
 import doobie.implicits.*
 import org.postgresql.util.PSQLException
 import org.scalatest.flatspec.AsyncFlatSpec
@@ -81,18 +83,18 @@ class DoobieRefreshTokenRepositorySpec
   it should "return false if the token id is unknown" in:
     withRepository(DoobieRefreshTokenRepository[IO](_)): tokens =>
       for
-        unknownId <- UUIDGen.randomUUID[IO].map(RefreshTokenId(_))
+        unknownId <- UUIDGen.randomUUID[IO].map(RefreshTokenId.fromUUID(_))
         revoked   <- tokens.revoke(unknownId, referenceTime)
       yield revoked shouldBe false
 
   it should "successfully rotate old token and add a replacement" in:
     withToken(refreshTokenRecord): (tokens, xa) =>
       for
-        replacementId     <- UUIDGen.randomUUID[IO].map(RefreshTokenId(_))
+        replacementId     <- UUIDGen.randomUUID[IO].map(RefreshTokenId.fromUUID(_))
         replacementRecord  = refreshTokenRecord.copy(
                                id = replacementId,
                                createdAt = referenceTime,
-                               tokenHash = RefreshTokenHash("new-hash")
+                               tokenHash = RefreshTokenHash.fromHash("new-hash")
                              )
         rotated           <- tokens.rotate(
                                refreshTokenRecord.tokenHash,
@@ -109,11 +111,11 @@ class DoobieRefreshTokenRepositorySpec
   it should "return false when trying to rotate old record that does not exist" in:
     withRefreshTokenRepository: (tokens, xa) =>
       for
-        replacementId     <- UUIDGen.randomUUID[IO].map(RefreshTokenId(_))
+        replacementId     <- UUIDGen.randomUUID[IO].map(RefreshTokenId.fromUUID(_))
         replacementRecord  = refreshTokenRecord.copy(
                                id = replacementId,
                                createdAt = referenceTime,
-                               tokenHash = RefreshTokenHash("new-hash")
+                               tokenHash = RefreshTokenHash.fromHash("new-hash")
                              )
         rotated           <- tokens.rotate(refreshTokenRecord.tokenHash, replacementRecord, referenceTime)
         replacementFromDb <- readRefreshTokenRecord(replacementRecord.id).transact(xa)
@@ -126,11 +128,11 @@ class DoobieRefreshTokenRepositorySpec
 
     withToken(expiredTokenRecord): (tokens, xa) =>
       for
-        replacementId     <- UUIDGen.randomUUID[IO].map(RefreshTokenId(_))
+        replacementId     <- UUIDGen.randomUUID[IO].map(RefreshTokenId.fromUUID(_))
         replacementRecord  = refreshTokenRecord.copy(
                                id = replacementId,
                                createdAt = referenceTime,
-                               tokenHash = RefreshTokenHash("new-hash")
+                               tokenHash = RefreshTokenHash.fromHash("new-hash")
                              )
         rotated           <- tokens.rotate(expiredTokenRecord.tokenHash, replacementRecord, referenceTime)
         oldRecord         <- readRefreshTokenRecord(expiredTokenRecord.id).transact(xa)
@@ -145,11 +147,11 @@ class DoobieRefreshTokenRepositorySpec
 
     withToken(revokedTokenRecord): (tokens, xa) =>
       for
-        replacementId     <- UUIDGen.randomUUID[IO].map(RefreshTokenId(_))
+        replacementId     <- UUIDGen.randomUUID[IO].map(RefreshTokenId.fromUUID(_))
         replacementRecord  = refreshTokenRecord.copy(
                                id = replacementId,
                                createdAt = referenceTime,
-                               tokenHash = RefreshTokenHash("new-hash")
+                               tokenHash = RefreshTokenHash.fromHash("new-hash")
                              )
         rotated           <- tokens.rotate(revokedTokenRecord.tokenHash, replacementRecord, referenceTime)
         oldRecord         <- readRefreshTokenRecord(revokedTokenRecord.id).transact(xa)
@@ -162,7 +164,7 @@ class DoobieRefreshTokenRepositorySpec
   it should "rollback revocation when replacement cannot be inserted" in:
     withToken(refreshTokenRecord): (tokens, xa) =>
       for
-        replacementId <- UUIDGen.randomUUID[IO].map(RefreshTokenId(_))
+        replacementId <- UUIDGen.randomUUID[IO].map(RefreshTokenId.fromUUID(_))
 
         replacementRecord =
           refreshTokenRecord.copy(id = replacementId)
@@ -190,20 +192,20 @@ class DoobieRefreshTokenRepositorySpec
   it should "allow only one concurrent rotation" in:
     withToken(refreshTokenRecord): (tokens, xa) =>
       for
-        firstId  <- UUIDGen.randomUUID[IO].map(RefreshTokenId(_))
-        secondId <- UUIDGen.randomUUID[IO].map(RefreshTokenId(_))
+        firstId  <- UUIDGen.randomUUID[IO].map(RefreshTokenId.fromUUID(_))
+        secondId <- UUIDGen.randomUUID[IO].map(RefreshTokenId.fromUUID(_))
 
         firstReplacement =
           refreshTokenRecord.copy(
             id = firstId,
-            tokenHash = RefreshTokenHash("first-replacement"),
+            tokenHash = RefreshTokenHash.fromHash("first-replacement"),
             createdAt = referenceTime
           )
 
         secondReplacement =
           refreshTokenRecord.copy(
             id = secondId,
-            tokenHash = RefreshTokenHash("second-replacement"),
+            tokenHash = RefreshTokenHash.fromHash("second-replacement"),
             createdAt = referenceTime
           )
 

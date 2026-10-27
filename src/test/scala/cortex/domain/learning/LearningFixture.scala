@@ -5,13 +5,13 @@ import cortex.domain.learning.*
 import java.util.UUID
 
 trait LearningFixture:
-  protected val contentId: ContentId = ContentId("id-1")
+  protected val contentId: ContentId = ContentId.fromStringUnsafe("id-1")
   protected val firstNote: Note = Note(
-    NoteId(UUID.fromString("00000000-0000-0000-0000-000000000001")),
+    NoteId.fromUUID(UUID.fromString("00000000-0000-0000-0000-000000000001")),
     "first note"
   )
   protected val secondNote: Note = Note(
-    NoteId(UUID.fromString("00000000-0000-0000-0000-000000000002")),
+    NoteId.fromUUID(UUID.fromString("00000000-0000-0000-0000-000000000002")),
     "second note"
   )
 

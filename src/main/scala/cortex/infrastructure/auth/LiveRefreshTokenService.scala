@@ -82,7 +82,7 @@ final private[infrastructure] class LiveRefreshTokenService[F[_]: {Monad, Clock,
   ): F[GeneratedRefreshToken] =
     for
       value     <- refreshTokenGenerator.generate
-      id        <- UUIDGen.randomUUID[F].map(RefreshTokenId(_))
+      id        <- UUIDGen.randomUUID[F].map(RefreshTokenId.fromUUID)
       tokenHash <- refreshTokenHasher.hash(value)
     yield GeneratedRefreshToken(
       record = RefreshTokenRecord(

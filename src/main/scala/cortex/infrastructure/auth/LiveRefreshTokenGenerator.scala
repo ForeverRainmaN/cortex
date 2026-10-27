@@ -14,7 +14,7 @@ final private[infrastructure] class LiveRefreshTokenGenerator[F[_]: Functor] pri
 
   override def generate: F[RefreshToken] =
     random.nextBytes(LiveRefreshTokenGenerator.TokenSizeBytes)
-      .map(bytes => RefreshToken(LiveRefreshTokenGenerator.encoder.encodeToString(bytes)))
+      .map(bytes => RefreshToken.fromString(LiveRefreshTokenGenerator.encoder.encodeToString(bytes)))
 
 object LiveRefreshTokenGenerator:
   private val TokenSizeBytes = 32

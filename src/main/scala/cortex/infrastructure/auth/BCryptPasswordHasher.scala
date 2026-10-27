@@ -14,7 +14,7 @@ final private[infrastructure] class BCryptPasswordHasher[F[_]: Sync] extends Pas
   override def hash(rawPassword: String): F[HashedPassword] =
     BCrypt
       .hashpw[F](rawPassword.getBytes(UTF_8))
-      .map(HashedPassword(_))
+      .map(HashedPassword.fromHash)
 
   override def verify(
     rawPassword: String,

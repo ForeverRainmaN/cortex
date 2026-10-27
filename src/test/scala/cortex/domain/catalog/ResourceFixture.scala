@@ -4,7 +4,7 @@ import java.util.UUID
 import scala.concurrent.duration.*
 
 trait ResourceFixture:
-  protected val resourceId: ResourceId = ResourceId(
+  protected val resourceId: ResourceId = ResourceId.fromUUID(
     UUID.fromString("00000000-0000-0000-0000-000000000001")
   )
 

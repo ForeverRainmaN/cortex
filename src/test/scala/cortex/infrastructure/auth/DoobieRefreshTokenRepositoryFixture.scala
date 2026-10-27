@@ -5,6 +5,7 @@ import cortex.domain.auth.{RefreshTokenHash, RefreshTokenId, RefreshTokenRecord,
 import cortex.domain.users.UserId
 import cortex.infrastructure.persistence.DoobieSpec
 import cortex.infrastructure.persistence.DoobieMappings.given
+import cortex.infrastructure.auth.DoobieAuthMappings.given
 import doobie.{ConnectionIO, Transactor}
 import doobie.implicits.*
 import doobie.postgres.implicits.*
@@ -19,16 +20,16 @@ trait DoobieRefreshTokenRepositoryFixture:
   protected val createdAt: Instant     = Instant.parse("2026-10-06T19:00:00Z")
   protected val expiresAt: Instant     = Instant.parse("2026-11-06T19:00:00Z")
 
-  protected val userId: UserId = UserId(
+  protected val userId: UserId = UserId.fromUUID(
     UUID.fromString("00000000-0000-0000-0000-000000000002")
   )
 
-  protected val refreshTokenId: RefreshTokenId = RefreshTokenId(
+  protected val refreshTokenId: RefreshTokenId = RefreshTokenId.fromUUID(
     UUID.fromString("00000000-0000-0000-0000-000000000001")
   )
 
   protected val tokenHash: RefreshTokenHash =
-    RefreshTokenHash("test-hash-123")
+    RefreshTokenHash.fromHash("test-hash-123")
 
   protected val refreshTokenRecord: RefreshTokenRecord =
     RefreshTokenRecord(
