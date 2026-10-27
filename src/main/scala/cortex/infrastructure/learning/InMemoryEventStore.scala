@@ -3,7 +3,7 @@ package cortex.infrastructure.learning
 import cats.effect.Ref
 import cats.effect.kernel.Sync
 import cats.syntax.all.*
-import cortex.domain.learning.{ContentId, LearningEvent}
+import cortex.domain.learning.{ContentId, EventStore, LearningEvent}
 
 final private[infrastructure] class InMemoryEventStore[F[_]: Sync] private (
   val storage: Ref[F, Map[ContentId, List[LearningEvent]]]

@@ -4,7 +4,6 @@ import cats.Monad
 import cats.data.EitherT
 import cats.syntax.either.given
 import cortex.domain.learning.*
-import cortex.infrastructure.learning.EventStore
 
 def handleCommand[F[_]: Monad](store: EventStore[F])(id: ContentId, command: Command): F[Either[CommandError, Unit]] =
   (for

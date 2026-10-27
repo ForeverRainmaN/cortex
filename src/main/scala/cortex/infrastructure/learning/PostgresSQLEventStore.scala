@@ -1,7 +1,7 @@
 package cortex.infrastructure.learning
 
 import cats.effect.kernel.Sync
-import cortex.domain.learning.{ContentId, LearningEvent}
+import cortex.domain.learning.{ContentId, EventStore, LearningEvent}
 
 final private[infrastructure] class PostgresSQLEventStore[F[_]: Sync] extends EventStore[F]:
 
