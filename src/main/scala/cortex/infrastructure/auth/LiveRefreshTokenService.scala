@@ -1,5 +1,6 @@
 package cortex.infrastructure.auth
 
+import cats.implicits.*
 import cats.Monad
 import cats.data.EitherT
 import cats.effect.kernel.Clock
@@ -12,11 +13,11 @@ import cortex.domain.auth.{
   RefreshTokenId,
   RefreshTokenRecord,
   RefreshTokenRepository,
-  RefreshTokenService,
-  RefreshTokenRotation
+  RefreshTokenRotation,
+  RefreshTokenService
 }
 import cortex.domain.users.UserId
-import cats.implicits.*
+import cortex.syntax.*
 
 import java.time.Instant
 import scala.concurrent.duration.FiniteDuration
@@ -55,9 +56,8 @@ final private[infrastructure] class LiveRefreshTokenService[F[_]: {Monad, Clock,
       newExpiresAt    = timestamp.plusMillis(refreshTokenTtl.toMillis)
       generated      <- EitherT.liftF(generateRefreshToken(oldTokenRecord.userId, timestamp, newExpiresAt))
       isRotated      <- EitherT.liftF(repository.rotate(oldTokenRecord.tokenHash, generated.record, timestamp))
-      _              <- EitherT.cond[F](
+      _              <- EitherT.condF[F, RefreshTokenError](
                           isRotated,
-                          (),
                           RefreshTokenError.InvalidOrExpired
                         )
     yield RefreshTokenRotation(
