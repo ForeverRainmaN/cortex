@@ -7,6 +7,10 @@ import org.scalatest.matchers.should.Matchers
 import scala.concurrent.duration.DurationInt
 
 class DecideSpec extends AnyFlatSpec, Matchers, LearningFixture:
+  private val page55       = PageNumber.fromInt(55).toOption.get
+  private val page20       = PageNumber.fromInt(20).toOption.get
+  private val elapsed25Sec = ElapsedDuration.from(25.seconds).toOption.get
+
   it should "enqueue new content" in:
     decide(contentId, emptyState, Command.Enqueue(ContentKind.Book)) shouldBe Right(
       LearningEvent.ContentQueued(contentId, ContentKind.Book)
@@ -74,19 +78,19 @@ class DecideSpec extends AnyFlatSpec, Matchers, LearningFixture:
     )
 
   it should "update progress while in InProgress state using correct kind" in:
-    decide(contentId, stateInProgress, Command.UpdateProgress(ContentProgress.BookAt(55))) shouldBe Right(
-      LearningEvent.ProgressUpdated(contentId, ContentProgress.BookAt(55))
+    decide(contentId, stateInProgress, Command.UpdateProgress(ContentProgress.BookAt(page55))) shouldBe Right(
+      LearningEvent.ProgressUpdated(contentId, ContentProgress.BookAt(page55))
     )
 
   it should "fail to update progress with VideoAt for Book" in:
-    decide(contentId, stateInProgress, Command.UpdateProgress(ContentProgress.VideoAt(25.seconds))) shouldBe Left(
-      DecideError.ProgressKindMismatch(ContentKind.Book, ContentProgress.VideoAt(25.seconds))
+    decide(contentId, stateInProgress, Command.UpdateProgress(ContentProgress.VideoAt(elapsed25Sec))) shouldBe Left(
+      DecideError.ProgressKindMismatch(ContentKind.Book, ContentProgress.VideoAt(elapsed25Sec))
     )
 
   it should "fail to update progress when in Todo state" in:
-    decide(contentId, stateTodo, Command.UpdateProgress(ContentProgress.BookAt(20))) shouldBe Left(
+    decide(contentId, stateTodo, Command.UpdateProgress(ContentProgress.BookAt(page20))) shouldBe Left(
       DecideError
-        .InvalidTransition(Command.UpdateProgress(ContentProgress.BookAt(20)), ContentKind.Book, ContentStatus.Todo)
+        .InvalidTransition(Command.UpdateProgress(ContentProgress.BookAt(page20)), ContentKind.Book, ContentStatus.Todo)
     )
 
   private def decideAll(states: Option[ContentState]*)(command: Command)(expected: DecideErrorOrEvent): Unit =

@@ -1,14 +1,12 @@
 package cortex.domain.learning
 
-import scala.concurrent.duration.Duration
-
 enum ContentKind:
   case Article, Video, Book
 
 enum ContentProgress:
-  case VideoAt(elapsed: Duration)
+  case VideoAt(elapsed: ElapsedDuration)
   case ArticleAt(percentage: Percentage)
-  case BookAt(page: Int)
+  case BookAt(page: PageNumber)
 
   def matches(kind: ContentKind): Boolean =
     (kind, this) match
