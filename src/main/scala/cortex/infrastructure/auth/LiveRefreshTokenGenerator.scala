@@ -11,10 +11,10 @@ import java.util.Base64
 final private[infrastructure] class LiveRefreshTokenGenerator[F[_]: Functor] private (
   random: SecureRandom[F]
 ) extends RefreshTokenGenerator[F]:
-  import LiveRefreshTokenGenerator.{encoder, TokenSizeBytes}
 
   override def generate: F[RefreshToken] =
-    random.nextBytes(TokenSizeBytes).map(bytes => RefreshToken(encoder.encodeToString(bytes)))
+    random.nextBytes(LiveRefreshTokenGenerator.TokenSizeBytes)
+      .map(bytes => RefreshToken(LiveRefreshTokenGenerator.encoder.encodeToString(bytes)))
 
 object LiveRefreshTokenGenerator:
   private val TokenSizeBytes = 32
