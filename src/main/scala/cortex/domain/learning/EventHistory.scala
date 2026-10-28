@@ -23,7 +23,7 @@ object EventVersion:
   extension (version: EventVersion)
     def value: Long = version
 
-    def next: Either[EventVersionError, EventVersion] =
+    def next: Either[EventVersionError.Overflow.type, EventVersion] =
       if version == Long.MaxValue then Left(EventVersionError.Overflow)
       else Right(version + 1)
 
